@@ -1,0 +1,218 @@
+{
+  "metadata": {
+    "id": "sunken-crypt",
+    "title": "The Sunken Crypt",
+    "version": "1.0.0",
+    "starting_location": "clearing",
+    "description": "A tiny demo adventure: coax a key from a hermit, brave the crypt, and recover the drowned amulet."
+  },
+
+  "map": {
+    "locations": [
+      {
+        "id": "clearing",
+        "name": "Forest Clearing",
+        "base_prose": "Birch trees ring a clearing of wet grass. A path west leads to a moss-roofed cottage; a darker trail east drops toward a stone archway.",
+        "tags": ["outdoor", "start"]
+      },
+      {
+        "id": "cottage",
+        "name": "Hermit's Cottage",
+        "base_prose": "Smoke curls from a crooked chimney. Dried herbs hang from the rafters, and an old hermit watches you from a low stool."
+      },
+      {
+        "id": "crypt_entrance",
+        "name": "Crypt Archway",
+        "base_prose": "A weathered archway frames a flooded stair. A rusted gate bars the way down. To one side, the floor has collapsed into a black pit."
+      },
+      {
+        "id": "crypt_vault",
+        "name": "Drowned Vault",
+        "base_prose": "Knee-deep water laps at toppled sarcophagi. On a central plinth, an amulet glints beneath the surface."
+      }
+    ],
+    "connections": [
+      { "from": "clearing", "to": "cottage", "description": "A path west to the cottage." },
+      { "from": "cottage", "to": "clearing", "description": "Back east to the clearing." },
+      { "from": "clearing", "to": "crypt_entrance", "description": "A trail east to the archway." },
+      { "from": "crypt_entrance", "to": "clearing", "description": "Back up to the clearing." },
+      {
+        "from": "crypt_entrance",
+        "to": "crypt_vault",
+        "condition": { "has": ["inventory", "rusty_key"] },
+        "description": "Through the rusted gate (needs a key)."
+      },
+      { "from": "crypt_vault", "to": "crypt_entrance", "description": "Back up the flooded stair." }
+    ]
+  },
+
+  "quests": [
+    {
+      "id": "recover_amulet",
+      "name": "The Drowned Amulet",
+      "description": "Recover the amulet rumored to lie in the sunken vault.",
+      "objectives": [
+        {
+          "id": "enter_vault",
+          "description": "Get past the rusted gate into the vault.",
+          "completion_criteria": { "==": ["location", "crypt_vault"] }
+        },
+        {
+          "id": "claim_amulet",
+          "description": "Take the amulet from the plinth.",
+          "completion_criteria": { "has": ["inventory", "amulet"] }
+        }
+      ],
+      "reward": {
+        "effects": [
+          { "type": "set_status", "parameters": { "key": "hero", "value": true } }
+        ]
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "id": "look",
+      "name": "Look around",
+      "description": "Take in your surroundings.",
+      "synonyms": ["look", "examine", "survey"],
+      "available_when": { "exists": "location" },
+      "effects": []
+    },
+    {
+      "id": "to_cottage",
+      "name": "Go to the cottage",
+      "description": "Follow the western path to the hermit's cottage.",
+      "synonyms": ["west", "cottage"],
+      "available_when": { "==": ["location", "clearing"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "cottage" } } ]
+    },
+    {
+      "id": "leave_cottage",
+      "name": "Return to the clearing",
+      "description": "Step back out to the clearing.",
+      "synonyms": ["east", "leave", "out"],
+      "available_when": { "==": ["location", "cottage"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "clearing" } } ]
+    },
+    {
+      "id": "talk_hermit",
+      "name": "Talk to the hermit",
+      "description": "Ask the hermit about the crypt.",
+      "synonyms": ["talk", "speak", "ask hermit"],
+      "available_when": { "==": ["location", "cottage"] },
+      "effects": [ { "type": "set_variable", "parameters": { "key": "met_hermit", "value": true } } ]
+    },
+    {
+      "id": "take_key",
+      "name": "Accept the rusty key",
+      "description": "The hermit offers a rusty key for the crypt gate.",
+      "synonyms": ["take key", "accept key", "key"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "cottage"] },
+          { "==": ["variables.met_hermit", true] },
+          { "not": { "has": ["inventory", "rusty_key"] } }
+        ]
+      },
+      "effects": [
+        { "type": "add_inventory", "parameters": { "item": "rusty_key", "qty": 1 } },
+        { "type": "start_quest", "parameters": { "quest": "recover_amulet" } }
+      ]
+    },
+    {
+      "id": "to_crypt",
+      "name": "Go to the crypt archway",
+      "description": "Take the eastern trail down to the archway.",
+      "synonyms": ["crypt", "archway", "east"],
+      "available_when": { "==": ["location", "clearing"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "crypt_entrance" } } ]
+    },
+    {
+      "id": "leave_crypt_entrance",
+      "name": "Climb back to the clearing",
+      "description": "Return up the trail.",
+      "synonyms": ["up", "back", "clearing"],
+      "available_when": { "==": ["location", "crypt_entrance"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "clearing" } } ]
+    },
+    {
+      "id": "enter_vault",
+      "name": "Unlock the gate and descend",
+      "description": "Work the rusty key into the gate and go down.",
+      "synonyms": ["unlock", "open gate", "descend", "down"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "crypt_entrance"] },
+          { "has": ["inventory", "rusty_key"] }
+        ]
+      },
+      "effects": [
+        { "type": "move_location", "parameters": { "to": "crypt_vault" } },
+        { "type": "complete_objective", "parameters": { "quest": "recover_amulet", "objective": "enter_vault" } }
+      ]
+    },
+    {
+      "id": "step_into_pit",
+      "name": "Peer into the pit",
+      "description": "Lean over the collapsed floor for a closer look.",
+      "synonyms": ["pit", "hole", "peer"],
+      "available_when": { "==": ["location", "crypt_entrance"] },
+      "effects": [
+        { "type": "trigger_end", "parameters": { "outcome": "lose", "reason": "You lean too far and the edge gives way." } }
+      ]
+    },
+    {
+      "id": "take_amulet",
+      "name": "Take the amulet",
+      "description": "Reach into the cold water and lift the amulet free.",
+      "synonyms": ["take amulet", "grab amulet", "amulet"],
+      "available_when": { "==": ["location", "crypt_vault"] },
+      "effects": [
+        { "type": "add_inventory", "parameters": { "item": "amulet", "qty": 1 } },
+        { "type": "complete_objective", "parameters": { "quest": "recover_amulet", "objective": "claim_amulet" } },
+        { "type": "complete_quest", "parameters": { "quest": "recover_amulet" } }
+      ]
+    },
+    {
+      "id": "leave_vault",
+      "name": "Wade back to the stair",
+      "description": "Return up the flooded stair.",
+      "synonyms": ["up", "back", "leave"],
+      "available_when": { "==": ["location", "crypt_vault"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "crypt_entrance" } } ]
+    }
+  ],
+
+  "npcs": [
+    {
+      "id": "hermit",
+      "name": "The Old Hermit",
+      "current_location": "cottage",
+      "dialogue_seed": "A wary recluse who knows the crypt's gate is locked and holds the only rusty key. Speaks in short, weather-worn sentences and warns of the collapsed floor.",
+      "state": { "trusts_player": false }
+    }
+  ],
+
+  "initial_state": {
+    "location": "clearing",
+    "inventory": {},
+    "status": {},
+    "active_quests": [],
+    "variables": {}
+  },
+
+  "win_conditions": [
+    {
+      "and": [
+        { "has": ["inventory", "amulet"] },
+        { "==": ["status.hero", true] }
+      ]
+    }
+  ],
+
+  "lose_conditions": [
+    { "==": ["outcome", "lose"] }
+  ]
+}
