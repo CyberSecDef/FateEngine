@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fateengine"
+version = "0.0.1"
+description = "A choose-your-own-adventure engine with authoritative state behind an MCP server and LLM-generated prose."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+dependencies = [
+    # Authoritative state is exposed as a real Model Context Protocol server.
+    "mcp>=1.2.0",
+    # Adventure / save JSON Schema validation (FR-001, NFR-004).
+    "jsonschema>=4.21",
+    # Provider-agnostic LLM config + CLI.
+    "pydantic>=2.6",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+# Default LLM provider adapter (swap freely — integration is provider-agnostic).
+anthropic = ["anthropic>=0.40"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+    "mypy>=1.9",
+]
+
+[project.scripts]
+fateengine = "fateengine.presentation.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fateengine"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

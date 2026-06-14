@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fateengine.local/schema/save.schema.json",
+  "title": "FateEngine Runtime Save",
+  "description": "Schema for a persisted runtime session (requirements_spec.md section 3 — Runtime save JSON). Mirrors initial_state plus history and bookkeeping.",
+  "type": "object",
+  "required": [
+    "adventure_id",
+    "adventure_version",
+    "location",
+    "inventory",
+    "status",
+    "active_quests",
+    "history_log",
+    "turn_number"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "adventure_id": { "type": "string", "minLength": 1 },
+    "adventure_version": { "type": "string", "minLength": 1 },
+    "location": { "type": "string", "minLength": 1 },
+    "inventory": { "type": "object" },
+    "status": { "type": "object" },
+    "active_quests": { "type": "array", "items": { "type": "string" } },
+    "variables": { "type": "object" },
+    "completed_quests": { "type": "array", "items": { "type": "string" } },
+    "turn_number": { "type": "integer", "minimum": 0 },
+    "history_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "turn_number", "action_id", "state_delta"],
+        "additionalProperties": false,
+        "properties": {
+          "timestamp": { "type": "string", "description": "ISO 8601." },
+          "turn_number": { "type": "integer", "minimum": 0 },
+          "action_id": { "type": "string" },
+          "state_delta": { "type": "object", "description": "Before/after diff applied this turn." }
+        }
+      }
+    }
+  }
+}

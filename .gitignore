@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+.env.*
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# FateEngine runtime
+# Player saves are generated at runtime, never committed.
+/saves/
+*.save.json
+
+# Logs
+*.log
+/logs/
+
+# Editor
+.idea/
+.vscode/
+*.swp

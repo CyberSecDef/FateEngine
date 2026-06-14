@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fateengine.local/schema/adventure.schema.json",
+  "title": "FateEngine Adventure",
+  "description": "Authoritative schema for a FateEngine adventure definition file. See requirements_spec.md sections 3, A, and B.",
+  "type": "object",
+  "required": ["metadata", "map", "quests", "actions", "npcs", "initial_state"],
+  "additionalProperties": false,
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["id", "title", "version", "starting_location"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "starting_location": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" }
+      }
+    },
+
+    "map": {
+      "type": "object",
+      "required": ["locations", "connections"],
+      "additionalProperties": false,
+      "properties": {
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "base_prose"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "base_prose": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "properties": { "type": "object" }
+            }
+          }
+        },
+        "connections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "additionalProperties": false,
+            "properties": {
+              "from": { "type": "string", "minLength": 1 },
+              "to": { "type": "string", "minLength": 1 },
+              "condition": { "$ref": "#/$defs/predicate" },
+              "description": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "quests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "objectives"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "objectives": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "description", "completion_criteria"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "description": { "type": "string" },
+                "completion_criteria": { "$ref": "#/$defs/predicate" }
+              }
+            }
+          },
+          "reward": {
+            "type": "object",
+            "required": ["effects"],
+            "additionalProperties": false,
+            "properties": {
+              "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } }
+            }
+          }
+        }
+      }
+    },
+
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description", "available_when", "effects"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "synonyms": { "type": "array", "items": { "type": "string" } },
+          "available_when": { "$ref": "#/$defs/predicate" },
+          "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } }
+        }
+      }
+    },
+
+    "npcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "current_location"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1 },
+          "current_location": { "type": "string", "minLength": 1 },
+          "dialogue_seed": { "type": "string" },
+          "state": { "type": "object" }
+        }
+      }
+    },
+
+    "initial_state": {
+      "type": "object",
+      "required": ["location", "inventory", "status", "active_quests"],
+      "additionalProperties": false,
+      "properties": {
+        "location": { "type": "string", "minLength": 1 },
+        "inventory": { "type": "object" },
+        "status": { "type": "object" },
+        "active_quests": { "type": "array", "items": { "type": "string" } },
+        "variables": { "type": "object" }
+      }
+    },
+
+    "win_conditions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/predicate" }
+    },
+    "lose_conditions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/predicate" }
+    }
+  },
+
+  "$defs": {
+    "predicate": {
+      "description": "Boolean predicate grammar (requirements_spec.md Appendix A). One of: boolean node, leaf comparison, or implicit-AND sugar object.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["and"],
+          "properties": { "and": { "type": "array", "items": { "$ref": "#/$defs/predicate" } } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["or"],
+          "properties": { "or": { "type": "array", "items": { "$ref": "#/$defs/predicate" } } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["not"],
+          "properties": { "not": { "$ref": "#/$defs/predicate" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "maxProperties": 1,
+          "properties": {
+            "==":  { "$ref": "#/$defs/comparisonOperands" },
+            "!=":  { "$ref": "#/$defs/comparisonOperands" },
+            ">":   { "$ref": "#/$defs/comparisonOperands" },
+            ">=":  { "$ref": "#/$defs/comparisonOperands" },
+            "<":   { "$ref": "#/$defs/comparisonOperands" },
+            "<=":  { "$ref": "#/$defs/comparisonOperands" },
+            "has": { "$ref": "#/$defs/comparisonOperands" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["exists"],
+          "properties": { "exists": { "type": "string", "description": "A state path that must be set/truthy." } }
+        },
+        {
+          "description": "Sugar: a bare object of >=1 keys is an implicit AND of equality checks against state paths.",
+          "type": "object",
+          "minProperties": 1,
+          "not": {
+            "anyOf": [
+              { "required": ["and"] }, { "required": ["or"] }, { "required": ["not"] },
+              { "required": ["exists"] }, { "required": ["=="] }, { "required": ["!="] },
+              { "required": [">"] }, { "required": [">="] }, { "required": ["<"] },
+              { "required": ["<="] }, { "required": ["has"] }
+            ]
+          }
+        }
+      ]
+    },
+
+    "comparisonOperands": {
+      "description": "[left, right] — a bare string left operand is interpreted as a state path.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2
+    },
+
+    "effect": {
+      "description": "Closed effect catalog (requirements_spec.md Appendix B). Unknown types are rejected.",
+      "type": "object",
+      "required": ["type", "parameters"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "move_location",
+            "add_inventory",
+            "remove_inventory",
+            "set_status",
+            "clear_status",
+            "set_variable",
+            "start_quest",
+            "complete_objective",
+            "complete_quest",
+            "grant_reward",
+            "trigger_end"
+          ]
+        },
+        "parameters": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "move_location" } } },
+          "then": { "properties": { "parameters": { "required": ["to"], "properties": { "to": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "add_inventory" } } },
+          "then": { "properties": { "parameters": { "required": ["item"], "properties": { "item": { "type": "string" }, "qty": { "type": "integer", "minimum": 1 }, "detail": { "type": "object" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "remove_inventory" } } },
+          "then": { "properties": { "parameters": { "required": ["item"], "properties": { "item": { "type": "string" }, "qty": { "type": "integer", "minimum": 1 } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "set_status" } } },
+          "then": { "properties": { "parameters": { "required": ["key", "value"], "properties": { "key": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "clear_status" } } },
+          "then": { "properties": { "parameters": { "required": ["key"], "properties": { "key": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "set_variable" } } },
+          "then": { "properties": { "parameters": { "required": ["key", "value"], "properties": { "key": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "start_quest" } } },
+          "then": { "properties": { "parameters": { "required": ["quest"], "properties": { "quest": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "complete_objective" } } },
+          "then": { "properties": { "parameters": { "required": ["quest", "objective"], "properties": { "quest": { "type": "string" }, "objective": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "complete_quest" } } },
+          "then": { "properties": { "parameters": { "required": ["quest"], "properties": { "quest": { "type": "string" } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "grant_reward" } } },
+          "then": { "properties": { "parameters": { "required": ["effects"], "properties": { "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } } } } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "trigger_end" } } },
+          "then": { "properties": { "parameters": { "required": ["outcome"], "properties": { "outcome": { "enum": ["win", "lose"] }, "reason": { "type": "string" } } } } }
+        }
+      ]
+    }
+  }
+}
