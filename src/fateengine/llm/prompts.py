@@ -81,10 +81,13 @@ def summarize_history(history_log: list[dict[str, Any]], last_n: int = 10) -> st
     recent = history_log[-last_n:]
     if not recent:
         return ""
-    return "\n".join(f"- turn {e.get('turn_number', '?')}: {e.get('action_id', '?')}" for e in recent)
+    return "\n".join(
+        f"- turn {e.get('turn_number', '?')}: {e.get('action_id', '?')}" for e in recent
+    )
 
 
 # --- helpers --------------------------------------------------------------
+
 
 def _inventory(state: dict[str, Any]) -> str:
     inv = state.get("inventory", {})

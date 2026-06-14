@@ -38,6 +38,7 @@ class LLMProvider(Protocol):
 
 # --- retry helper ---------------------------------------------------------
 
+
 def _status_of(exc: Exception) -> int | None:
     for attr in ("status_code", "status"):
         val = getattr(exc, attr, None)
@@ -70,12 +71,13 @@ def _retry(
             last = exc
             if attempt >= max_retries or not _is_retryable(exc):
                 break
-            delay = min(max_delay, base_delay * (2 ** attempt)) + random.uniform(0, 0.5)
+            delay = min(max_delay, base_delay * (2**attempt)) + random.uniform(0, 0.5)
             sleep(delay)
     raise LLMError(f"LLM request failed: {last}") from last
 
 
 # --- Anthropic ------------------------------------------------------------
+
 
 class AnthropicProvider:
     """Claude via the official `anthropic` SDK."""
@@ -104,7 +106,9 @@ class AnthropicProvider:
             try:
                 from anthropic import Anthropic
             except ImportError as exc:  # pragma: no cover - optional dep
-                raise LLMError("the 'anthropic' package is required; pip install anthropic") from exc
+                raise LLMError(
+                    "the 'anthropic' package is required; pip install anthropic"
+                ) from exc
             self._client = Anthropic(
                 api_key=self._api_key, base_url=self._base_url, timeout=self._timeout
             )
@@ -128,6 +132,7 @@ class AnthropicProvider:
 
 
 # --- OpenAI / OpenAI-compatible ------------------------------------------
+
 
 class OpenAIProvider:
     """OpenAI (and OpenAI-compatible servers via base_url) using the `openai` SDK."""
@@ -222,7 +227,9 @@ def get_provider(config: LLMConfig) -> LLMProvider:
         base_url = config.endpoint or ("http://localhost:11434/v1" if local else None)
         # If the user left the default Anthropic env var in place, fall back to the
         # conventional OpenAI one. Local servers don't require a key.
-        key_env = config.api_key_env if config.api_key_env != "ANTHROPIC_API_KEY" else "OPENAI_API_KEY"
+        key_env = (
+            config.api_key_env if config.api_key_env != "ANTHROPIC_API_KEY" else "OPENAI_API_KEY"
+        )
         return OpenAIProvider(
             model=config.model,
             api_key=_resolve_key(key_env, required=not local and base_url is None),

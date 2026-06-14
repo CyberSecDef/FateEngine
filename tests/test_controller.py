@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import pytest
 
 from fateengine.controller.persistence import SaveStore
 from fateengine.controller.session import SessionController
@@ -31,16 +30,24 @@ class FakeLLM:
         self.calls += 1
         if self.fail:
             raise LLMError("boom")
-        if "Action id:" in prompt:          # intent-resolution prompt
+        if "Action id:" in prompt:  # intent-resolution prompt
             return self.pick or "none"
         return self.prose
 
 
-WIN_PATH = ["to_cottage", "talk_hermit", "take_key", "leave_cottage",
-            "to_crypt", "enter_vault", "take_amulet"]
+WIN_PATH = [
+    "to_cottage",
+    "talk_hermit",
+    "take_key",
+    "leave_cottage",
+    "to_crypt",
+    "enter_vault",
+    "take_amulet",
+]
 
 
 # ---- offline turn loop ---------------------------------------------------
+
 
 def test_begin_renders_base_prose_offline(tmp_path):
     ctl = make_controller(tmp_path)
@@ -59,13 +66,13 @@ def test_take_turn_by_exact_name(tmp_path):
 
 def test_take_turn_by_synonym(tmp_path):
     ctl = make_controller(tmp_path)
-    ctl.take_turn("cottage")               # synonym of to_cottage
+    ctl.take_turn("cottage")  # synonym of to_cottage
     assert ctl.mcp.state.location == "cottage"
 
 
 def test_take_turn_fuzzy(tmp_path):
     ctl = make_controller(tmp_path)
-    ctl.take_turn("go to teh cotage")      # typos -> fuzzy match
+    ctl.take_turn("go to teh cotage")  # typos -> fuzzy match
     assert ctl.mcp.state.location == "cottage"
 
 
@@ -73,12 +80,12 @@ def test_unmatched_input_reports_diagnostic(tmp_path):
     ctl = make_controller(tmp_path)
     res = ctl.take_turn("xyzzy plugh nonsense")
     assert res.diagnostics
-    assert ctl.mcp.state.location == "clearing"   # nothing changed
+    assert ctl.mcp.state.location == "clearing"  # nothing changed
 
 
 def test_unavailable_action_reports_diagnostic(tmp_path):
     ctl = make_controller(tmp_path)
-    res = ctl.take_turn("take the amulet")        # not in the vault
+    res = ctl.take_turn("take the amulet")  # not in the vault
     assert res.diagnostics
     assert ctl.mcp.state.location == "clearing"
 
@@ -103,6 +110,7 @@ def test_lose_path(tmp_path):
 
 # ---- save / load via the controller --------------------------------------
 
+
 def test_save_and_load_round_trip(tmp_path):
     ctl = make_controller(tmp_path)
     for cmd in WIN_PATH[:4]:
@@ -126,6 +134,7 @@ def test_restart_resets_state(tmp_path):
 
 # ---- LLM path ------------------------------------------------------------
 
+
 def test_llm_prose_used_when_provider_present(tmp_path):
     llm = FakeLLM(prose="<<narrated>>")
     ctl = make_controller(tmp_path, llm=llm)
@@ -138,7 +147,7 @@ def test_llm_failure_falls_back_to_base_prose(tmp_path):
     llm = FakeLLM(fail=True)
     ctl = make_controller(tmp_path, llm=llm)
     res = ctl.begin()
-    assert "clearing" in res.prose.lower()   # base_prose fallback (NFR-006)
+    assert "clearing" in res.prose.lower()  # base_prose fallback (NFR-006)
 
 
 def test_llm_intent_fallback_resolves_action(tmp_path):

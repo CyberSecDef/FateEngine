@@ -23,6 +23,7 @@ def example_data() -> dict:
 
 # ---- the shipped example must be valid -----------------------------------
 
+
 def test_example_adventure_loads(loader):
     adv = loader.load_adventure(EXAMPLE)
     assert adv.id == "sunken-crypt"
@@ -37,6 +38,7 @@ def test_list_adventures_finds_example(loader):
 
 
 # ---- structural (schema) failures ----------------------------------------
+
 
 def test_missing_required_section_raises(loader, tmp_path, example_data):
     del example_data["quests"]
@@ -64,6 +66,7 @@ def test_not_json_raises(loader, tmp_path):
 
 
 # ---- semantic (referential-integrity) failures ---------------------------
+
 
 def test_connection_to_unknown_location(loader, tmp_path, example_data):
     data = copy.deepcopy(example_data)
@@ -107,6 +110,7 @@ def test_duplicate_location_id(loader, tmp_path, example_data):
 
 # ---- the example is actually winnable via the tested effect engine -------
 
+
 def test_example_is_completable(loader):
     """Drive the example through a winning path using the real effect engine,
     then confirm the win predicate holds — a smoke test that the adventure's
@@ -120,8 +124,15 @@ def test_example_is_completable(loader):
     rewards = {q["id"]: q["reward"]["effects"] for q in adv.quests if q.get("reward")}
 
     state = GameState(**{k: v for k, v in adv.initial_state.items()})
-    winning_path = ["to_cottage", "talk_hermit", "take_key", "leave_cottage",
-                    "to_crypt", "enter_vault", "take_amulet"]
+    winning_path = [
+        "to_cottage",
+        "talk_hermit",
+        "take_key",
+        "leave_cottage",
+        "to_crypt",
+        "enter_vault",
+        "take_amulet",
+    ]
 
     for action_id in winning_path:
         action = actions[action_id]

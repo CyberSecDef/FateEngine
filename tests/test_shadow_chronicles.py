@@ -25,14 +25,37 @@ def play(engine, ids):
 # The full critical path: keycard + knife, power cell from engineering -> power the
 # scanner -> lab badge -> beat the specimen -> anchor key, read the code, activate.
 WIN = [
-    "go_dark_hallway", "go_security_office", "take_keycard", "take_knife", "go_dark_hallway",
-    "go_central_hub", "go_engineering_entrance", "go_utility_corridor", "go_generator_room",
-    "take_power_cell", "go_utility_corridor", "go_engineering_entrance", "go_central_hub",
-    "go_science_entrance", "insert_power_cell", "go_science_lab", "take_lab_badge",
-    "read_terminal", "go_specimen_containment", "attack_specimen", "take_anchor_key",
-    "go_science_lab", "go_science_entrance", "go_central_hub", "go_command_corridor",
-    "go_observation_deck", "read_console", "go_command_corridor", "go_anchor_antechamber",
-    "go_anchor_chamber", "activate_anchor",
+    "go_dark_hallway",
+    "go_security_office",
+    "take_keycard",
+    "take_knife",
+    "go_dark_hallway",
+    "go_central_hub",
+    "go_engineering_entrance",
+    "go_utility_corridor",
+    "go_generator_room",
+    "take_power_cell",
+    "go_utility_corridor",
+    "go_engineering_entrance",
+    "go_central_hub",
+    "go_science_entrance",
+    "insert_power_cell",
+    "go_science_lab",
+    "take_lab_badge",
+    "read_terminal",
+    "go_specimen_containment",
+    "attack_specimen",
+    "take_anchor_key",
+    "go_science_lab",
+    "go_science_entrance",
+    "go_central_hub",
+    "go_command_corridor",
+    "go_observation_deck",
+    "read_console",
+    "go_command_corridor",
+    "go_anchor_antechamber",
+    "go_anchor_chamber",
+    "activate_anchor",
 ]
 
 
@@ -48,40 +71,68 @@ def test_full_critical_path_wins(engine):
     s = engine.get_state()
     assert s["status"].get("anchor_activated") is True
     assert "project_anchor" in s["completed_quests"]
-    assert "echoes" in s["completed_quests"]          # read_terminal -> optional quest
-    assert s["status"].get("attuned") is True          # echoes grant_reward
+    assert "echoes" in s["completed_quests"]  # read_terminal -> optional quest
+    assert s["status"].get("attuned") is True  # echoes grant_reward
 
 
 def test_gating_blocks_premature_progress(engine):
     # The COMMAND door needs the keycard; the lab needs a powered scanner.
     play(engine, ["go_dark_hallway", "go_central_hub"])
     ids = {a["id"] for a in engine.available_actions()}
-    assert "go_command_corridor" not in ids            # no keycard yet
-    assert "go_science_lab" not in ids                 # (not even adjacent / unpowered)
+    assert "go_command_corridor" not in ids  # no keycard yet
+    assert "go_science_lab" not in ids  # (not even adjacent / unpowered)
 
 
 def test_specimen_blocks_the_anchor_key(engine):
     # Reach containment but the key isn't takeable until the specimen is down.
-    path = ["go_dark_hallway", "go_security_office", "take_keycard", "go_dark_hallway",
-            "go_central_hub", "go_engineering_entrance", "go_utility_corridor",
-            "go_generator_room", "take_power_cell", "go_utility_corridor",
-            "go_engineering_entrance", "go_central_hub", "go_science_entrance",
-            "insert_power_cell", "go_science_lab", "take_lab_badge", "go_specimen_containment"]
+    path = [
+        "go_dark_hallway",
+        "go_security_office",
+        "take_keycard",
+        "go_dark_hallway",
+        "go_central_hub",
+        "go_engineering_entrance",
+        "go_utility_corridor",
+        "go_generator_room",
+        "take_power_cell",
+        "go_utility_corridor",
+        "go_engineering_entrance",
+        "go_central_hub",
+        "go_science_entrance",
+        "insert_power_cell",
+        "go_science_lab",
+        "take_lab_badge",
+        "go_specimen_containment",
+    ]
     play(engine, path)
     ids = {a["id"] for a in engine.available_actions()}
-    assert "take_anchor_key" not in ids                # specimen not defeated
-    assert "attack_specimen" not in ids                # no knife (left it behind)
-    assert "fight_barehanded" in ids                   # ...but you can do something foolish
+    assert "take_anchor_key" not in ids  # specimen not defeated
+    assert "attack_specimen" not in ids  # no knife (left it behind)
+    assert "fight_barehanded" in ids  # ...but you can do something foolish
 
 
 def test_barehanded_rush_is_lethal(engine):
     # No knife -> rushing the specimen is a lose.
-    path = ["go_dark_hallway", "go_security_office", "take_keycard", "go_dark_hallway",
-            "go_central_hub", "go_engineering_entrance", "go_utility_corridor",
-            "go_generator_room", "take_power_cell", "go_utility_corridor",
-            "go_engineering_entrance", "go_central_hub", "go_science_entrance",
-            "insert_power_cell", "go_science_lab", "take_lab_badge",
-            "go_specimen_containment", "fight_barehanded"]
+    path = [
+        "go_dark_hallway",
+        "go_security_office",
+        "take_keycard",
+        "go_dark_hallway",
+        "go_central_hub",
+        "go_engineering_entrance",
+        "go_utility_corridor",
+        "go_generator_room",
+        "take_power_cell",
+        "go_utility_corridor",
+        "go_engineering_entrance",
+        "go_central_hub",
+        "go_science_entrance",
+        "insert_power_cell",
+        "go_science_lab",
+        "take_lab_badge",
+        "go_specimen_containment",
+        "fight_barehanded",
+    ]
     res = play(engine, path)[-1]
     assert res["ended"] and res["outcome"] == "lose"
 

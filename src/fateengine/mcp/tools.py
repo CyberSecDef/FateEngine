@@ -69,6 +69,8 @@ def build_server(
     return server
 
 
-def serve_stdio(engine: "FateMCPServer", *, allow_write: bool = False) -> None:  # pragma: no cover - needs SDK + host
+def serve_stdio(
+    engine: "FateMCPServer", *, allow_write: bool = False
+) -> None:  # pragma: no cover - needs SDK + host
     """Run the MCP server over stdio (the local transport)."""
     build_server(engine, allow_write=allow_write).run()

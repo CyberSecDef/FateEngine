@@ -13,9 +13,13 @@ from fateengine.presentation import cli
 EXAMPLE = Path(__file__).resolve().parents[1] / "adventures" / "example.json"
 
 WIN_BY_NAME = [
-    "Go to the cottage", "Talk to the hermit", "Accept the rusty key",
-    "Return to the clearing", "Go to the crypt archway",
-    "Unlock the gate and descend", "Take the amulet",
+    "Go to the cottage",
+    "Talk to the hermit",
+    "Accept the rusty key",
+    "Return to the clearing",
+    "Go to the crypt archway",
+    "Unlock the gate and descend",
+    "Take the amulet",
 ]
 
 
@@ -45,6 +49,7 @@ def driver(lines):
 
 # ---- parser --------------------------------------------------------------
 
+
 def test_parser_play_resume_list():
     p = build = cli.build_parser()
     assert build.parse_args(["play", "a.json"]).command == "play"
@@ -56,19 +61,21 @@ def test_parser_play_resume_list():
 
 # ---- rendering -----------------------------------------------------------
 
+
 def test_format_turn_shows_prose_and_numbered_actions(tmp_path):
     ctl = make_controller(tmp_path)
     rendered = cli.format_turn(ctl.begin(), "The Sunken Crypt")
     assert "The Sunken Crypt" in rendered
-    assert "1. " in rendered                       # numbered actions
-    assert "turn 0" in rendered                     # status line
+    assert "1. " in rendered  # numbered actions
+    assert "turn 0" in rendered  # status line
 
 
 # ---- interactive play ----------------------------------------------------
 
+
 def test_offline_win_via_action_names(tmp_path):
     ctl = make_controller(tmp_path)
-    read, write, out = driver(WIN_BY_NAME)            # EOF after the win -> graceful exit
+    read, write, out = driver(WIN_BY_NAME)  # EOF after the win -> graceful exit
     code = cli.run_session(ctl, "The Sunken Crypt", read=read, write=write)
     blob = "\n".join(out)
     assert code == 0
@@ -122,7 +129,7 @@ def test_unknown_command(tmp_path):
 
 def test_eof_quits_gracefully(tmp_path):
     ctl = make_controller(tmp_path)
-    read, write, out = driver([])                      # immediate EOF
+    read, write, out = driver([])  # immediate EOF
     assert cli.run_session(ctl, "T", read=read, write=write) == 0
 
 
@@ -135,6 +142,7 @@ def test_restart_command(tmp_path):
 
 
 # ---- list command --------------------------------------------------------
+
 
 def test_cmd_list_includes_example(tmp_path, monkeypatch):
     from fateengine.config import AppConfig

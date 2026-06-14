@@ -89,7 +89,9 @@ def _eval_comparison(op: str, operands: Any, state: GameState) -> bool:
 
 def _eval_has(operands: Any, state: GameState) -> bool:
     container_ref, key = _operand_pair("has", operands)
-    container = state.resolve_path(container_ref) if isinstance(container_ref, str) else container_ref
+    container = (
+        state.resolve_path(container_ref) if isinstance(container_ref, str) else container_ref
+    )
     if isinstance(container, dict):
         return key in container and bool(container[key])
     if isinstance(container, (list, tuple, set)):

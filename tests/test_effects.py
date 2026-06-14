@@ -12,6 +12,7 @@ def eff(type_, **params):
 
 # ---- inventory -----------------------------------------------------------
 
+
 def test_add_inventory_new_and_increment():
     s = GameState()
     apply_effect(eff("add_inventory", item="gold", qty=10), s)
@@ -52,6 +53,7 @@ def test_remove_absent_item_raises():
 
 # ---- status / variables / location --------------------------------------
 
+
 def test_move_location():
     s = GameState(location="a")
     apply_effect(eff("move_location", to="b"), s)
@@ -73,6 +75,7 @@ def test_set_variable():
 
 
 # ---- quests --------------------------------------------------------------
+
 
 def test_start_quest_idempotent():
     s = GameState()
@@ -97,7 +100,12 @@ def test_complete_quest_moves_active_to_completed():
 
 def test_complete_quest_applies_reward_via_resolver():
     s = GameState(active_quests=["rescue"])
-    rewards = {"rescue": [eff("add_inventory", item="gold", qty=100), eff("set_status", key="hero", value=True)]}
+    rewards = {
+        "rescue": [
+            eff("add_inventory", item="gold", qty=100),
+            eff("set_status", key="hero", value=True),
+        ]
+    }
     apply_effect(eff("complete_quest", quest="rescue"), s, reward_resolver=rewards.get)
     assert s.inventory["gold"] == 100
     assert s.status["hero"] is True
@@ -106,18 +114,23 @@ def test_complete_quest_applies_reward_via_resolver():
 
 # ---- grant_reward (recursive bundle) ------------------------------------
 
+
 def test_grant_reward_applies_bundle():
     s = GameState()
-    bundle = eff("grant_reward", effects=[
-        eff("add_inventory", item="map", qty=1),
-        eff("set_variable", key="blessed", value=True),
-    ])
+    bundle = eff(
+        "grant_reward",
+        effects=[
+            eff("add_inventory", item="map", qty=1),
+            eff("set_variable", key="blessed", value=True),
+        ],
+    )
     apply_effect(bundle, s)
     assert s.inventory["map"] == 1
     assert s.variables["blessed"] is True
 
 
 # ---- trigger_end ---------------------------------------------------------
+
 
 def test_trigger_end_win():
     s = GameState()
@@ -131,6 +144,7 @@ def test_trigger_end_bad_outcome_raises():
 
 
 # ---- validation ----------------------------------------------------------
+
 
 def test_unknown_effect_type_raises():
     with pytest.raises(EffectError):
@@ -147,17 +161,20 @@ def test_catalog_matches_schema_enum():
     import json
     from pathlib import Path
 
-    schema = json.loads((Path(__file__).resolve().parents[1] / "schema" / "adventure.schema.json").read_text())
+    schema = json.loads(
+        (Path(__file__).resolve().parents[1] / "schema" / "adventure.schema.json").read_text()
+    )
     enum = set(schema["$defs"]["effect"]["properties"]["type"]["enum"])
     assert enum == set(EFFECT_TYPES)
 
 
 # ---- atomicity (NFR-002) -------------------------------------------------
 
+
 def test_transaction_rolls_back_on_failure():
     s = GameState(inventory={"gold": 5})
     bundle = [
-        eff("add_inventory", item="gold", qty=10),     # ok
+        eff("add_inventory", item="gold", qty=10),  # ok
         eff("remove_inventory", item="potion", qty=1),  # fails: absent
     ]
     with pytest.raises(EffectError):

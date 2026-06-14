@@ -21,6 +21,7 @@ def state() -> GameState:
 
 # ---- leaf comparisons ----------------------------------------------------
 
+
 def test_eq_on_path(state):
     assert evaluate({"==": ["location", "tavern"]}, state) is True
     assert evaluate({"==": ["location", "dungeon"]}, state) is False
@@ -53,6 +54,7 @@ def test_nested_detail_path(state):
 
 # ---- has / exists --------------------------------------------------------
 
+
 def test_has_inventory(state):
     assert evaluate({"has": ["inventory", "torch"]}, state) is True
     assert evaluate({"has": ["inventory", "shield"]}, state) is False
@@ -80,6 +82,7 @@ def test_exists_treats_zero_as_set(state):
 
 # ---- quest paths ---------------------------------------------------------
 
+
 def test_quest_status_paths(state):
     assert evaluate({"==": ["quests.rescue", "active"]}, state) is True
     assert evaluate({"==": ["quests.intro", "completed"]}, state) is True
@@ -93,13 +96,23 @@ def test_objective_completion_path(state):
 
 # ---- boolean composition -------------------------------------------------
 
+
 def test_and(state):
-    assert evaluate({"and": [{"==": ["location", "tavern"]}, {"has": ["inventory", "torch"]}]}, state) is True
-    assert evaluate({"and": [{"==": ["location", "tavern"]}, {"has": ["inventory", "shield"]}]}, state) is False
+    assert (
+        evaluate({"and": [{"==": ["location", "tavern"]}, {"has": ["inventory", "torch"]}]}, state)
+        is True
+    )
+    assert (
+        evaluate({"and": [{"==": ["location", "tavern"]}, {"has": ["inventory", "shield"]}]}, state)
+        is False
+    )
 
 
 def test_or(state):
-    assert evaluate({"or": [{"==": ["location", "dungeon"]}, {"has": ["inventory", "torch"]}]}, state) is True
+    assert (
+        evaluate({"or": [{"==": ["location", "dungeon"]}, {"has": ["inventory", "torch"]}]}, state)
+        is True
+    )
 
 
 def test_not(state):
@@ -119,6 +132,7 @@ def test_nested_composition(state):
 
 # ---- implicit-AND sugar --------------------------------------------------
 
+
 def test_sugar_single_key(state):
     assert evaluate({"location": "tavern"}, state) is True
     assert evaluate({"location": "dungeon"}, state) is False
@@ -130,6 +144,7 @@ def test_sugar_multi_key_implicit_and(state):
 
 
 # ---- error handling ------------------------------------------------------
+
 
 def test_bad_arity_raises(state):
     with pytest.raises(PredicateError):

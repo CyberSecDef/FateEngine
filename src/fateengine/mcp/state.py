@@ -55,7 +55,7 @@ class GameState:
     history_log: list[dict[str, Any]] = field(default_factory=list)
     turn_number: int = 0
     ended: bool = False
-    outcome: str | None = None          # "win" | "lose" | None
+    outcome: str | None = None  # "win" | "lose" | None
     end_reason: str | None = None
 
     # ---- atomicity -------------------------------------------------------

@@ -86,11 +86,13 @@ class FateMCPServer:
             cond = conn.get("condition")
             if cond is not None and not evaluate(cond, self.state):
                 continue
-            exits.append({
-                "to": conn["to"],
-                "to_name": self._locations.get(conn["to"], {}).get("name", conn["to"]),
-                "description": conn.get("description", ""),
-            })
+            exits.append(
+                {
+                    "to": conn["to"],
+                    "to_name": self._locations.get(conn["to"], {}).get("name", conn["to"]),
+                    "description": conn.get("description", ""),
+                }
+            )
         npcs = [
             {"id": n["id"], "name": n["name"]}
             for n in self.adventure.npcs
@@ -128,12 +130,14 @@ class FateMCPServer:
         out = []
         for action in self.adventure.actions:
             if evaluate(action["available_when"], self.state):
-                out.append({
-                    "id": action["id"],
-                    "name": action["name"],
-                    "description": action["description"],
-                    "synonyms": action.get("synonyms", []),
-                })
+                out.append(
+                    {
+                        "id": action["id"],
+                        "name": action["name"],
+                        "description": action["description"],
+                        "synonyms": action.get("synonyms", []),
+                    }
+                )
         return out
 
     def apply_action(self, action_id: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -160,12 +164,14 @@ class FateMCPServer:
 
         outcome = self._resolve_end_conditions()
         delta = self.state.diff_from(before)
-        self.state.history_log.append({
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "turn_number": self.state.turn_number,
-            "action_id": action_id,
-            "state_delta": delta,
-        })
+        self.state.history_log.append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "turn_number": self.state.turn_number,
+                "action_id": action_id,
+                "state_delta": delta,
+            }
+        )
         return {"delta": delta, "events": events, "ended": self.state.ended, "outcome": outcome}
 
     def evaluate_quests(self) -> list[dict[str, Any]]:
@@ -192,7 +198,10 @@ class FateMCPServer:
                 done = oid in self.state.completed_objectives.get(qid, [])
                 if not done and evaluate(obj["completion_criteria"], self.state):
                     apply_effect(
-                        {"type": "complete_objective", "parameters": {"quest": qid, "objective": oid}},
+                        {
+                            "type": "complete_objective",
+                            "parameters": {"quest": qid, "objective": oid},
+                        },
                         self.state,
                     )
                     events.append({"type": "objective_complete", "quest": qid, "objective": oid})
@@ -251,8 +260,7 @@ class FateMCPServer:
         """
         if save.get("adventure_id") != self.adventure.id:
             raise ActionError(
-                f"save is for adventure {save.get('adventure_id')!r}, "
-                f"not {self.adventure.id!r}"
+                f"save is for adventure {save.get('adventure_id')!r}, not {self.adventure.id!r}"
             )
         self.state = GameState(
             location=save["location"],

@@ -60,7 +60,7 @@ class SaveStore:
         with self._lock(final):
             tmp = final.with_name(final.name + ".tmp")
             tmp.write_text(json.dumps(payload, indent=2))
-            os.replace(tmp, final)   # atomic on POSIX
+            os.replace(tmp, final)  # atomic on POSIX
         return final
 
     def read(self, adventure_id: str, slot: str) -> dict[str, Any]:

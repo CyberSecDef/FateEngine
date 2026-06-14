@@ -103,6 +103,7 @@ class AdventureLoader:
 
 # --- internals ------------------------------------------------------------
 
+
 @lru_cache(maxsize=None)
 def _schema(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
@@ -142,9 +143,7 @@ def _integrity_errors(data: dict[str, Any]) -> list[str]:
 
     loc_ids = {loc["id"] for loc in data["map"]["locations"]}
     quest_ids = {q["id"] for q in data["quests"]}
-    objective_ids = {
-        (q["id"], obj["id"]) for q in data["quests"] for obj in q["objectives"]
-    }
+    objective_ids = {(q["id"], obj["id"]) for q in data["quests"] for obj in q["objectives"]}
 
     def dup_check(items: list[dict[str, Any]], label: str) -> None:
         seen: set[str] = set()

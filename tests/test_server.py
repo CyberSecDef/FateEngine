@@ -22,8 +22,15 @@ def engine() -> FateMCPServer:
     return eng
 
 
-WIN_PATH = ["to_cottage", "talk_hermit", "take_key", "leave_cottage",
-            "to_crypt", "enter_vault", "take_amulet"]
+WIN_PATH = [
+    "to_cottage",
+    "talk_hermit",
+    "take_key",
+    "leave_cottage",
+    "to_crypt",
+    "enter_vault",
+    "take_amulet",
+]
 
 
 def play(engine: FateMCPServer, action_ids):
@@ -34,6 +41,7 @@ def play(engine: FateMCPServer, action_ids):
 
 
 # ---- initialization + read tools -----------------------------------------
+
 
 def test_initialize_seeds_from_initial_state(engine):
     s = engine.get_state()
@@ -65,15 +73,16 @@ def test_look_up_npc(engine):
 
 # ---- available actions + gating ------------------------------------------
 
+
 def test_available_actions_gated_by_location(engine):
     ids = {a["id"] for a in engine.available_actions()}
     assert "to_cottage" in ids
-    assert "take_amulet" not in ids   # wrong location
+    assert "take_amulet" not in ids  # wrong location
 
 
 def test_apply_unavailable_action_raises(engine):
     with pytest.raises(ActionError):
-        engine.apply_action("take_amulet")   # not in crypt_vault
+        engine.apply_action("take_amulet")  # not in crypt_vault
 
 
 def test_apply_unknown_action_raises(engine):
@@ -84,13 +93,14 @@ def test_apply_unknown_action_raises(engine):
 def test_take_key_gated_until_hermit_met(engine):
     engine.apply_action("to_cottage")
     with pytest.raises(ActionError):
-        engine.apply_action("take_key")       # haven't talked to hermit
+        engine.apply_action("take_key")  # haven't talked to hermit
     engine.apply_action("talk_hermit")
-    engine.apply_action("take_key")           # now allowed
+    engine.apply_action("take_key")  # now allowed
     assert "rusty_key" in engine.get_state()["inventory"]
 
 
 # ---- full winning playthrough --------------------------------------------
+
 
 def test_winning_playthrough(engine):
     results = play(engine, WIN_PATH)
@@ -112,11 +122,15 @@ def test_engine_auto_completes_quest_from_criteria(engine):
     engine._actions["take_amulet"]["effects"] = [
         {"type": "add_inventory", "parameters": {"item": "amulet", "qty": 1}},
     ]
-    play(engine, WIN_PATH[:-1])               # up to entering the vault
+    play(engine, WIN_PATH[:-1])  # up to entering the vault
     assert "recover_amulet" in engine.get_state()["active_quests"]
 
     res = engine.apply_action("take_amulet")
-    assert {"type": "objective_complete", "quest": "recover_amulet", "objective": "claim_amulet"} in res["events"]
+    assert {
+        "type": "objective_complete",
+        "quest": "recover_amulet",
+        "objective": "claim_amulet",
+    } in res["events"]
     assert {"type": "quest_complete", "quest": "recover_amulet"} in res["events"]
     # Reward applied via the auto-completed quest.
     assert engine.get_state()["status"].get("hero") is True
@@ -138,6 +152,7 @@ def test_no_actions_after_end(engine):
 
 # ---- lose path -----------------------------------------------------------
 
+
 def test_lose_via_trigger_end(engine):
     engine.apply_action("to_crypt")
     res = engine.apply_action("step_into_pit")
@@ -146,6 +161,7 @@ def test_lose_via_trigger_end(engine):
 
 
 # ---- atomicity -----------------------------------------------------------
+
 
 def test_failed_action_leaves_state_untouched(engine):
     # Force a mid-bundle failure by monkeypatching an action to a bad effect.
@@ -156,10 +172,11 @@ def test_failed_action_leaves_state_untouched(engine):
     before = engine.get_state()
     with pytest.raises(Exception):
         engine.apply_action("look")
-    assert engine.get_state() == before        # rolled back, incl. turn_number
+    assert engine.get_state() == before  # rolled back, incl. turn_number
 
 
 # ---- persistence round-trip ----------------------------------------------
+
 
 def test_serialize_matches_schema(engine):
     play(engine, WIN_PATH[:4])
@@ -168,7 +185,7 @@ def test_serialize_matches_schema(engine):
 
 
 def test_save_resume_round_trip(engine):
-    play(engine, WIN_PATH[:5])                 # mid-adventure
+    play(engine, WIN_PATH[:5])  # mid-adventure
     save = engine.serialize()
 
     fresh = FateMCPServer(AdventureLoader().load_adventure(EXAMPLE))

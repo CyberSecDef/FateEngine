@@ -76,6 +76,7 @@ def apply_effect(
 
 # --- simple appliers (no recursion) --------------------------------------
 
+
 def _move_location(p: dict[str, Any], s: GameState) -> None:
     s.location = _require(p, "to", "move_location")
 

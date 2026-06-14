@@ -14,6 +14,7 @@ from fateengine.llm.provider import (
 
 # --- fake SDK clients -----------------------------------------------------
 
+
 class _Block:
     def __init__(self, text):
         self.text = text
@@ -64,6 +65,7 @@ class FakeOpenAI:
 
 # --- Anthropic ------------------------------------------------------------
 
+
 def test_anthropic_generate_returns_text_and_shapes_request():
     fake = FakeAnthropic("once upon a time")
     p = AnthropicProvider(model="claude-opus-4-8", client=fake, max_tokens=512)
@@ -74,10 +76,11 @@ def test_anthropic_generate_returns_text_and_shapes_request():
     assert kw["system"] == "SYSTEM"
     assert kw["messages"] == [{"role": "user", "content": "PROMPT"}]
     assert kw["max_tokens"] == 512
-    assert "temperature" not in kw          # Opus rejects sampling params
+    assert "temperature" not in kw  # Opus rejects sampling params
 
 
 # --- OpenAI ---------------------------------------------------------------
+
 
 def test_openai_generate_returns_text_and_shapes_request():
     fake = FakeOpenAI("a dark and stormy night")
@@ -99,13 +102,14 @@ def test_openai_omits_temperature_when_unset():
 
 # --- retry ----------------------------------------------------------------
 
+
 def test_retry_succeeds_after_transient_failures():
     calls = {"n": 0}
 
     def flaky():
         calls["n"] += 1
         if calls["n"] < 3:
-            raise RuntimeError("connection reset")   # no status -> retryable
+            raise RuntimeError("connection reset")  # no status -> retryable
         return "ok"
 
     assert _retry(flaky, max_retries=5, sleep=lambda _: None) == "ok"
@@ -129,10 +133,11 @@ def test_retry_does_not_retry_non_retryable_status():
 
     with pytest.raises(LLMError):
         _retry(bad_request, max_retries=5, sleep=lambda _: None)
-    assert calls["n"] == 1                    # 400 is not retried
+    assert calls["n"] == 1  # 400 is not retried
 
 
 # --- factory --------------------------------------------------------------
+
 
 def test_get_provider_anthropic(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")

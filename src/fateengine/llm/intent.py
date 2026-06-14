@@ -25,7 +25,7 @@ class Resolution:
     action_id: str | None
     params: dict[str, Any] = field(default_factory=dict)
     confidence: float = 0.0
-    source: str = "none"          # "local" | "llm" | "none"
+    source: str = "none"  # "local" | "llm" | "none"
 
 
 def local_match(text: str, available_actions: list[dict[str, Any]]) -> Resolution:
@@ -99,5 +99,9 @@ def resolve(
             pass
     # Nothing confident enough to act on. Surface the weak guess as a non-actionable
     # suggestion (action_id stays None) so callers can offer "did you mean ...?".
-    return Resolution(None, confidence=local.confidence, source="none",
-                      params={"suggestion": local.action_id} if local.action_id else {})
+    return Resolution(
+        None,
+        confidence=local.confidence,
+        source="none",
+        params={"suggestion": local.action_id} if local.action_id else {},
+    )

@@ -130,7 +130,9 @@ class SessionController:
         parts = [action.get("description") or action["name"]]
         for ev in result.get("events", []):
             if ev["type"] == "objective_complete":
-                parts.append(f"(Objective complete: {self._objective_name(ev['quest'], ev['objective'])})")
+                parts.append(
+                    f"(Objective complete: {self._objective_name(ev['quest'], ev['objective'])})"
+                )
             elif ev["type"] == "quest_complete":
                 parts.append(f"(Quest complete: {self._quests[ev['quest']]['name']})")
         return " ".join(parts)
@@ -143,8 +145,14 @@ class SessionController:
         return f"{prose}\n\n{banner}"
 
     # ---- view helpers ----------------------------------------------------
-    def _render(self, prose: str, *, ended: bool = False, outcome: str | None = None,
-                diagnostics: list[str] | None = None) -> TurnResult:
+    def _render(
+        self,
+        prose: str,
+        *,
+        ended: bool = False,
+        outcome: str | None = None,
+        diagnostics: list[str] | None = None,
+    ) -> TurnResult:
         s = self.mcp.state
         return TurnResult(
             prose=prose,
@@ -160,7 +168,9 @@ class SessionController:
         return {
             "location": s["location_name"],
             "inventory": list(s["inventory"].keys()),
-            "active_quests": [self._quests[q]["name"] for q in s["active_quests"] if q in self._quests],
+            "active_quests": [
+                self._quests[q]["name"] for q in s["active_quests"] if q in self._quests
+            ],
             "status": s["status"],
             "turn": s["turn_number"],
         }

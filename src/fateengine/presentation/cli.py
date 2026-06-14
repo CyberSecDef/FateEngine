@@ -42,6 +42,7 @@ Commands:
 
 # --- styling --------------------------------------------------------------
 
+
 def _style(text: str, code: str, color: bool) -> str:
     return f"\033[{code}m{text}\033[0m" if color else text
 
@@ -81,6 +82,7 @@ def _status_line(status: dict) -> str:
 
 
 # --- the loop -------------------------------------------------------------
+
 
 def run_session(
     controller: SessionController,
@@ -171,14 +173,19 @@ def _command(controller: SessionController, line: str, *, color: bool):
 
 # --- entry point ----------------------------------------------------------
 
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="fateengine", description="Play a FateEngine adventure.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     play = sub.add_parser("play", help="Start a new adventure.")
     play.add_argument("adventure", help="Path to an adventure JSON file.")
-    play.add_argument("--llm", metavar="PROVIDER", default=None,
-                      help="Enable LLM narration via the named provider (default: offline).")
+    play.add_argument(
+        "--llm",
+        metavar="PROVIDER",
+        default=None,
+        help="Enable LLM narration via the named provider (default: offline).",
+    )
 
     resume = sub.add_parser("resume", help="Resume from a save slot.")
     resume.add_argument("adventure", help="Path to the adventure JSON file.")
@@ -192,8 +199,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     serve.add_argument("adventure", help="Path to the adventure JSON file.")
     serve.add_argument("--slot", default=None, help="Resume from a save slot before serving.")
-    serve.add_argument("--write", action="store_true",
-                       help="Also expose state-mutating tools (for an agentic host).")
+    serve.add_argument(
+        "--write",
+        action="store_true",
+        help="Also expose state-mutating tools (for an agentic host).",
+    )
     return parser
 
 

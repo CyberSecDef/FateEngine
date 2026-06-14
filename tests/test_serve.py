@@ -35,6 +35,7 @@ class FakeFastMCP:
 
 # ---- tool selection ------------------------------------------------------
 
+
 def test_read_only_by_default(engine):
     names = set(tools.tool_methods(engine))
     assert names == set(tools.READ_TOOLS)
@@ -48,6 +49,7 @@ def test_allow_write_adds_mutating_tools(engine):
 
 
 # ---- registration via injected factory -----------------------------------
+
 
 def test_build_server_registers_read_tools(engine):
     fake = FakeFastMCP()
@@ -77,6 +79,7 @@ def test_registered_write_tool_drives_the_engine(engine):
 
 # ---- CLI dispatch --------------------------------------------------------
 
+
 def test_parser_has_serve():
     args = cli.build_parser().parse_args(["serve", "a.json", "--write"])
     assert args.command == "serve" and args.write is True
@@ -92,7 +95,7 @@ def test_cli_serve_invokes_serve_stdio(monkeypatch, capsys):
     code = cli.main(["serve", str(EXAMPLE), "--write"])
     assert code == 0
     assert captured == {"allow_write": True}
-    assert "MCP server" in capsys.readouterr().err   # status goes to stderr
+    assert "MCP server" in capsys.readouterr().err  # status goes to stderr
 
 
 def test_cli_serve_resume_bad_slot_errors(monkeypatch):

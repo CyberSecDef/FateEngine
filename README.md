@@ -1,5 +1,7 @@
 # FateEngine
 
+[![CI](https://github.com/CyberSecDef/FateEngine/actions/workflows/ci.yml/badge.svg)](https://github.com/CyberSecDef/FateEngine/actions/workflows/ci.yml)
+
 A choose-your-own-adventure engine where **authoritative game state lives behind a
 [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server** and an LLM supplies
 only the narrative prose. Adventures are plain JSON; the engine is provider-agnostic and runs
