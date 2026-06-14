@@ -20,8 +20,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Default LLM provider adapter (swap freely — integration is provider-agnostic).
+# LLM provider adapters (swap freely — integration is provider-agnostic).
 anthropic = ["anthropic>=0.40"]
+openai = ["openai>=1.40"]
+llm = ["anthropic>=0.40", "openai>=1.40"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",

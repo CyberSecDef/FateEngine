@@ -41,7 +41,11 @@ See [`requirements_spec.md`](./requirements_spec.md) for the full specification.
 
 ## Status
 
-Early scaffold. Package skeleton + JSON Schemas are in place; component implementations are stubs.
+Playable. All five components are implemented and unit-tested (118 tests): adventure
+loading + validation, the MCP state engine (predicates, effects, quests, win/lose,
+save/resume), provider-agnostic LLM narration (Anthropic + OpenAI/compatible), the
+turn-loop controller, and a terminal CLI/TUI. The game runs fully offline; an LLM is
+optional and only enriches prose + free-text understanding.
 
 ## Layout
 
@@ -63,13 +67,43 @@ FateEngine/
 └── tests/
 ```
 
-## Quick start (planned)
+## Quick start
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-fateengine play adventures/example.json      # once implemented
+
+# Play offline (authored prose, local free-text matching) — no API key needed:
+fateengine play adventures/example.json
+fateengine list
+fateengine resume adventures/example.json quicksave
 ```
+
+In-game: choose an action by number or type what you want to do; `/save`, `/load`,
+`/saves`, `/look`, `/status`, `/restart`, `/help`, `/quit`.
+
+### Optional LLM narration
+
+Narration and ambiguous free-text are handled by an LLM when one is configured;
+on any failure it falls back to the authored `base_prose` (NFR-006).
+
+```bash
+pip install -e ".[llm]"        # anthropic + openai SDKs
+
+# Claude (default model claude-opus-4-8):
+export ANTHROPIC_API_KEY=sk-...
+fateengine play adventures/example.json --llm anthropic
+
+# OpenAI:
+export OPENAI_API_KEY=sk-...
+fateengine play adventures/example.json --llm openai
+
+# Local Ollama (OpenAI-compatible, no key):
+fateengine play adventures/example.json --llm ollama
+```
+
+Providers are selected by name (`anthropic`, `openai`, `ollama`/`local`,
+`openai-compatible`); endpoint, model, and params live in `LLMConfig`.
 
 ## Authoring adventures
 
