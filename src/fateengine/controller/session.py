@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -9,7 +11,10 @@ from ..config import AppConfig
 from ..llm import intent, prompts
 from ..llm.provider import LLMError, LLMProvider
 from ..mcp.server import ActionError, FateMCPServer
+from ..observability import new_session_id
 from .persistence import SaveStore
+
+_log = logging.getLogger("fateengine.session")
 
 
 @dataclass
@@ -39,13 +44,21 @@ class SessionController:
         llm: LLMProvider | None,
         saves: SaveStore,
         config: AppConfig | None = None,
+        session_id: str | None = None,
     ) -> None:
         self.mcp = mcp
         self.llm = llm
         self.saves = saves
         self.config = config or AppConfig()
+        self.session_id = session_id or new_session_id()
         self._actions = {a["id"]: a for a in mcp.adventure.actions}
         self._quests = {q["id"]: q for q in mcp.adventure.quests}
+        # Last constructed prompt / LLM response, surfaced by diagnostic mode.
+        self.last_prompt: str | None = None
+        self.last_response: str | None = None
+
+    def _emit(self, level: int, msg: str, *args: Any) -> None:
+        _log.log(level, msg, *args, extra={"session": self.session_id})
 
     # ---- turn loop -------------------------------------------------------
     def begin(self) -> TurnResult:
@@ -60,6 +73,7 @@ class SessionController:
         available = self.mcp.available_actions()
         resolution = intent.resolve(user_input, available, self.llm)
         if resolution.action_id is None:
+            self._emit(logging.INFO, "unresolved input: %r", user_input)
             return self._render(
                 self.mcp.describe_location()["base_prose"],
                 diagnostics=[f"Couldn't match {user_input!r} to an available action."],
@@ -68,10 +82,22 @@ class SessionController:
         try:
             result = self.mcp.apply_action(resolution.action_id, resolution.params)
         except ActionError as exc:
+            self._emit(logging.WARNING, "rejected action %s: %s", resolution.action_id, exc)
             return self._render(
                 self.mcp.describe_location()["base_prose"],
                 diagnostics=[str(exc)],
             )
+
+        # NFR-007: log the transition with before/after state delta.
+        self._emit(
+            logging.INFO,
+            "turn %d: action=%s (via %s) outcome=%s",
+            self.mcp.state.turn_number,
+            resolution.action_id,
+            resolution.source,
+            result["outcome"],
+        )
+        self._emit(logging.DEBUG, "delta=%s events=%s", result["delta"], result["events"])
 
         prose = self._narrate_outcome(result, resolution.action_id)
         if result["ended"]:
@@ -82,11 +108,13 @@ class SessionController:
     def save(self, slot: str) -> None:
         """Serialize via the MCP and persist atomically (FR-011)."""
         self.saves.write(self.mcp.adventure.id, slot, self.mcp.serialize())
+        self._emit(logging.INFO, "saved to slot %r (turn %d)", slot, self.mcp.state.turn_number)
 
     def load(self, slot: str) -> TurnResult:
         """Restore a save into the MCP and resume (FR-012)."""
         data = self.saves.read(self.mcp.adventure.id, slot)
         self.mcp.deserialize(data)
+        self._emit(logging.INFO, "loaded slot %r (turn %d)", slot, self.mcp.state.turn_number)
         return self._render(self._narrate_location())
 
     def restart(self) -> TurnResult:
@@ -108,8 +136,9 @@ class SessionController:
                 self._active_quest_views(),
                 prompts.summarize_history(self.mcp.state.history_log),
             )
-            return self.llm.generate(system, user, max_tokens=self.config.llm.max_tokens)
+            return self._generate(system, user, "location")
         except LLMError:
+            self._emit(logging.WARNING, "LLM failed; falling back to base_prose")
             return base  # NFR-006 fallback
 
     def _narrate_outcome(self, result: dict[str, Any], action_id: str) -> str:
@@ -122,9 +151,36 @@ class SessionController:
                 action,
                 prompts.summarize_history(self.mcp.state.history_log),
             )
-            return self.llm.generate(system, user, max_tokens=self.config.llm.max_tokens)
+            return self._generate(system, user, "outcome")
         except LLMError:
+            self._emit(logging.WARNING, "LLM failed; using offline narration")
             return self._offline_outcome(action, result)
+
+    def _generate(self, system: str, user: str, kind: str) -> str:
+        """Call the LLM, recording the prompt + response (NFR-007, diagnostic mode)."""
+        assert self.llm is not None
+        self.last_prompt = f"[{kind}]\nSYSTEM:\n{system}\n\nUSER:\n{user}"
+        self._emit(logging.DEBUG, "llm prompt %s", self.last_prompt)
+        response = self.llm.generate(system, user, max_tokens=self.config.llm.max_tokens)
+        self.last_response = response
+        self._emit(logging.DEBUG, "llm response [%s]: %s", kind, response)
+        return response
+
+    def debug_snapshot(self) -> str:
+        """Human-readable dump of raw MCP state, last prompt/response, and recent
+        history — backs the CLI /debug command and diagnostic mode (section 7)."""
+        lines = [
+            f"session: {self.session_id}",
+            "state:",
+            json.dumps(self.mcp.get_state(), indent=2, default=str),
+            "recent history:",
+            json.dumps(self.mcp.recall_history(5), indent=2, default=str),
+        ]
+        if self.last_prompt:
+            lines += ["last prompt:", self.last_prompt]
+        if self.last_response:
+            lines += ["last response:", self.last_response]
+        return "\n".join(lines)
 
     def _offline_outcome(self, action: dict[str, Any], result: dict[str, Any]) -> str:
         parts = [action.get("description") or action["name"]]

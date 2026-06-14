@@ -14,17 +14,19 @@ import os
 import sys
 import textwrap
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from ..config import AppConfig
 from ..controller.persistence import SaveError, SaveStore
 from ..controller.session import SessionController, TurnResult
 from ..loader import AdventureLoader, LoadError
 from ..mcp.server import FateMCPServer
+from ..observability import configure_logging, new_session_id
 
 WIDTH = 78
 PROMPT = "\n> "
 DEFAULT_SLOT = "quicksave"
+AUTOSAVE_SLOT = "autosave"
 
 HELP = """\
 Commands:
@@ -34,10 +36,12 @@ Commands:
   /load [slot]    load a saved game
   /saves          list save slots
   /look           re-read the current location
+  /map            show the area map
   /status         show the status panel
+  /debug          dump raw state + last prompt/response (diagnostics)
   /restart        restart the adventure from the beginning
   /help           show this help
-  /quit           leave the game"""
+  /quit           leave the game (autosaves)"""
 
 
 # --- styling --------------------------------------------------------------
@@ -102,6 +106,7 @@ def run_session(
         try:
             raw = read(PROMPT).strip()
         except (EOFError, KeyboardInterrupt):
+            _autosave(controller, write)
             write("\nFarewell.")
             return 0
 
@@ -115,6 +120,7 @@ def run_session(
             if new_result is not None:
                 result = new_result
             if done:
+                _autosave(controller, write)
                 return 0
             continue
 
@@ -168,7 +174,42 @@ def _command(controller: SessionController, line: str, *, color: bool):
         desc = controller.mcp.describe_location()
         exits = ", ".join(e.get("to_name", e["to"]) for e in desc["exits"]) or "none"
         return False, None, f"{desc['base_prose']}\nExits: {exits}"
+    if cmd == "map":
+        return False, None, _map_summary(controller)
+    if cmd == "debug":
+        return False, None, controller.debug_snapshot()
     return False, None, f"Unknown command: /{cmd} (try /help)"
+
+
+def _autosave(controller: SessionController, write: Callable[[str], None]) -> None:
+    """Serialize pending progress on shutdown (graceful shutdown, section 7).
+    Skipped once the adventure has ended."""
+    if controller.mcp.state.ended:
+        return
+    try:
+        controller.save(AUTOSAVE_SLOT)
+        write(f"(progress autosaved to slot {AUTOSAVE_SLOT!r})")
+    except SaveError as exc:
+        write(f"(autosave failed: {exc})")
+
+
+def _map_summary(controller: SessionController) -> str:
+    """Textual map derived from the adventure's connections (interface §5)."""
+    adv = controller.mcp.adventure
+    current = controller.mcp.state.location
+    names = {loc["id"]: loc["name"] for loc in adv.map["locations"]}
+    by_from: dict[str, list[dict[str, Any]]] = {}
+    for conn in adv.map["connections"]:
+        by_from.setdefault(conn["from"], []).append(conn)
+
+    lines = ["Map:"]
+    for loc in adv.map["locations"]:
+        here = "  (you are here)" if loc["id"] == current else ""
+        lines.append(f"  {loc['name']}{here}")
+        for conn in by_from.get(loc["id"], []):
+            lock = " [locked]" if conn.get("condition") else ""
+            lines.append(f"      -> {names.get(conn['to'], conn['to'])}{lock}")
+    return "\n".join(lines)
 
 
 # --- entry point ----------------------------------------------------------
@@ -190,6 +231,11 @@ def _add_llm_args(p: argparse.ArgumentParser) -> None:
         help="Override the LLM base URL (e.g. http://localhost:11434/v1).",
     )
     p.add_argument("--model", default=None, help="Override the LLM model name.")
+    p.add_argument(
+        "--debug",
+        action="store_true",
+        help="Diagnostic mode: DEBUG logging to stderr, plus the /debug command.",
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -217,6 +263,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Also expose state-mutating tools (for an agentic host).",
     )
+    serve.add_argument("--debug", action="store_true", help="Diagnostic mode: DEBUG logging.")
     return parser
 
 
@@ -265,10 +312,15 @@ def _build_llm(args, config: AppConfig, write: Callable[[str], None]):
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     config = AppConfig.load()
+    if getattr(args, "debug", False):
+        config.diagnostic_mode = True
     color = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
     if args.command == "list":
         return _cmd_list(config, print)
+
+    session_id = new_session_id()
+    configure_logging(config, session_id)
 
     loader = AdventureLoader()
     try:
@@ -288,6 +340,7 @@ def main(argv: list[str] | None = None) -> int:
         _build_llm(args, config, print),
         SaveStore(config.saves_dir),
         config,
+        session_id=session_id,
     )
 
     if args.command == "resume":

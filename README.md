@@ -82,7 +82,17 @@ fateengine resume adventures/example.json quicksave
 ```
 
 In-game: choose an action by number or type what you want to do; `/save`, `/load`,
-`/saves`, `/look`, `/status`, `/restart`, `/help`, `/quit`.
+`/saves`, `/look`, `/map`, `/status`, `/debug`, `/restart`, `/help`, `/quit`.
+Quitting (or Ctrl-D / Ctrl-C) autosaves to the `autosave` slot — resume with
+`fateengine resume <adventure> autosave`.
+
+### Logging & diagnostics
+
+Every session logs MCP transitions and LLM prompts/responses with a session id,
+timestamp, and before/after state deltas to `logs/fateengine-<session>.log`
+(verbosity from `log_level`; never to stdout). Run with `--debug` (or set
+`diagnostic_mode`) for DEBUG logging mirrored to stderr plus the in-game `/debug`
+command, which dumps raw state, recent history, and the last prompt/response.
 
 ### Optional LLM narration
 

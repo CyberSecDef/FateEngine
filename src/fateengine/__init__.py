@@ -14,4 +14,9 @@ Components (strict separation of concerns, requirements_spec.md section 6):
 Invariant: no component except `mcp` mutates game state.
 """
 
+import logging
+
 __version__ = "0.0.1"
+
+# Library logging is silent until a host calls observability.configure_logging.
+logging.getLogger("fateengine").addHandler(logging.NullHandler())
