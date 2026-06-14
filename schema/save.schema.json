@@ -24,6 +24,14 @@
     "active_quests": { "type": "array", "items": { "type": "string" } },
     "variables": { "type": "object" },
     "completed_quests": { "type": "array", "items": { "type": "string" } },
+    "completed_objectives": {
+      "type": "object",
+      "description": "quest_id -> [objective_id, ...] already satisfied.",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } }
+    },
+    "ended": { "type": "boolean" },
+    "outcome": { "type": ["string", "null"], "enum": ["win", "lose", null] },
+    "end_reason": { "type": ["string", "null"] },
     "turn_number": { "type": "integer", "minimum": 0 },
     "history_log": {
       "type": "array",
