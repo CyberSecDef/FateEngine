@@ -186,6 +186,14 @@ def build_parser() -> argparse.ArgumentParser:
     resume.add_argument("--llm", metavar="PROVIDER", default=None)
 
     sub.add_parser("list", help="List available adventures.")
+
+    serve = sub.add_parser(
+        "serve", help="Run as an MCP server over stdio, exposing the adventure's tools."
+    )
+    serve.add_argument("adventure", help="Path to the adventure JSON file.")
+    serve.add_argument("--slot", default=None, help="Resume from a save slot before serving.")
+    serve.add_argument("--write", action="store_true",
+                       help="Also expose state-mutating tools (for an agentic host).")
     return parser
 
 
@@ -235,6 +243,10 @@ def main(argv: list[str] | None = None) -> int:
 
     engine = FateMCPServer(adventure)
     engine.initialize()
+
+    if args.command == "serve":
+        return _run_serve(engine, adventure, args, config)
+
     controller = SessionController(
         engine,
         _maybe_provider(args.llm, config, print),
@@ -250,6 +262,27 @@ def main(argv: list[str] | None = None) -> int:
             return 1
 
     return run_session(controller, adventure.metadata["title"], color=color)
+
+
+def _run_serve(engine: FateMCPServer, adventure, args, config: AppConfig) -> int:
+    """Run the MCP stdio server. All status goes to stderr — stdout is the protocol."""
+    if args.slot:
+        try:
+            engine.deserialize(SaveStore(config.saves_dir).read(adventure.id, args.slot))
+        except SaveError as exc:
+            print(exc, file=sys.stderr)
+            return 1
+    mode = "read+write" if args.write else "read-only"
+    print(
+        f"FateEngine MCP server: {adventure.metadata['title']} ({mode} tools) on stdio",
+        file=sys.stderr,
+    )
+    try:
+        engine.serve_stdio(allow_write=args.write)
+    except ImportError as exc:
+        print(exc, file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

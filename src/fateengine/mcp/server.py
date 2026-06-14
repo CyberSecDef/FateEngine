@@ -269,9 +269,13 @@ class FateMCPServer:
             end_reason=save.get("end_reason"),
         )
 
-    def serve_stdio(self) -> None:
-        """Run as a Model Context Protocol server over stdio, exposing the
-        read-only tool subset to an LLM host. Delegates to tools.register."""
+    def serve_stdio(self, *, allow_write: bool = False) -> None:
+        """Run as a Model Context Protocol server over stdio.
+
+        Exposes the read-only tool subset to an LLM host by default; set
+        allow_write=True to also expose the gameplay-driving write tools for an
+        agentic host that should drive the game itself.
+        """
         from . import tools
 
-        tools.serve_stdio(self)
+        tools.serve_stdio(self, allow_write=allow_write)

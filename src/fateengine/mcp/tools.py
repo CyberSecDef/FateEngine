@@ -1,21 +1,22 @@
 """MCP tool registration (Model Context Protocol surface).
 
-The LLM is given ONLY the read-only tools (FR-015, hybrid control). The mutating
-tools stay in-process for the Session Controller and are deliberately NOT
-registered on the MCP server handed to the model.
+By default the server exposes ONLY the read-only tools (FR-015, hybrid control):
+an LLM host can inspect state but not change it. `allow_write=True` additionally
+exposes the gameplay-driving write tools for an *agentic* host that should drive
+the game itself — an explicit opt-in, since it hands state mutation to the model.
 
-The `mcp` SDK is imported lazily inside `build_server` / `serve_stdio` so the
-core engine (`server.py`) and its tests don't require the SDK to be installed.
+The `mcp` SDK is imported lazily (and the FastMCP factory is injectable) so the
+core engine and its tests need no SDK.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
     from .server import FateMCPServer
 
-# Tool names exposed to the LLM. The LLM is given ONLY these (FR-015).
+# Tool names exposed to the LLM by default (FR-015).
 READ_TOOLS: tuple[str, ...] = (
     "get_state",
     "describe_location",
@@ -23,38 +24,51 @@ READ_TOOLS: tuple[str, ...] = (
     "recall_history",
 )
 
-# Mutating tools — reserved for the Session Controller. Never handed to the LLM.
+# Mutating tools — reserved for the Session Controller in the hybrid model, and
+# only served over MCP when allow_write=True (agentic host).
 WRITE_TOOLS: tuple[str, ...] = (
     "available_actions",
     "apply_action",
     "evaluate_quests",
     "check_end_conditions",
-    "serialize",
-    "deserialize",
 )
 
 
-def build_server(engine: "FateMCPServer"):
-    """Construct a FastMCP server exposing only the read-only tools of `engine`.
+def tool_methods(engine: "FateMCPServer", *, allow_write: bool = False) -> dict[str, Callable]:
+    """Return {tool_name: bound method} to expose. Pure — no SDK needed."""
+    names = list(READ_TOOLS) + (list(WRITE_TOOLS) if allow_write else [])
+    return {name: getattr(engine, name) for name in names}
 
-    Returns the FastMCP instance (not run). Raises ImportError with a helpful
-    message if the optional `mcp` SDK is not installed.
+
+def build_server(
+    engine: "FateMCPServer",
+    *,
+    allow_write: bool = False,
+    factory: Callable[[], Any] | None = None,
+):
+    """Construct a FastMCP server exposing `engine`'s tools.
+
+    `factory` builds the server object (defaults to FastMCP); inject a fake in
+    tests. Returns the server instance (not run).
     """
-    try:
-        from mcp.server.fastmcp import FastMCP
-    except ImportError as exc:  # pragma: no cover - depends on optional dep
-        raise ImportError(
-            "The 'mcp' package is required to run the MCP server. "
-            "Install it with: pip install mcp"
-        ) from exc
+    if factory is None:
+        try:
+            from mcp.server.fastmcp import FastMCP
+        except ImportError as exc:  # pragma: no cover - optional dep
+            raise ImportError(
+                "The 'mcp' package is required to run the MCP server. "
+                "Install it with: pip install mcp"
+            ) from exc
 
-    mcp = FastMCP("fateengine")
-    for name in READ_TOOLS:
-        method = getattr(engine, name)
-        mcp.add_tool(method, name=name, description=(method.__doc__ or "").strip())
-    return mcp
+        def factory() -> Any:
+            return FastMCP("fateengine")
+
+    server = factory()
+    for name, method in tool_methods(engine, allow_write=allow_write).items():
+        server.add_tool(method, name=name, description=(method.__doc__ or "").strip())
+    return server
 
 
-def serve_stdio(engine: "FateMCPServer") -> None:  # pragma: no cover - needs SDK + host
-    """Run the MCP server over stdio (the local single-player transport)."""
-    build_server(engine).run()
+def serve_stdio(engine: "FateMCPServer", *, allow_write: bool = False) -> None:  # pragma: no cover - needs SDK + host
+    """Run the MCP server over stdio (the local transport)."""
+    build_server(engine, allow_write=allow_write).run()

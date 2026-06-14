@@ -105,6 +105,27 @@ fateengine play adventures/example.json --llm ollama
 Providers are selected by name (`anthropic`, `openai`, `ollama`/`local`,
 `openai-compatible`); endpoint, model, and params live in `LLMConfig`.
 
+### Run as an MCP server
+
+FateEngine can also run as a real Model Context Protocol server over stdio, so an
+external host (e.g. an LLM agent) can connect to a live adventure:
+
+```bash
+# (the `mcp` SDK is a core dependency, installed with the package)
+
+# Read-only tools (get_state, describe_location, look_up_npc, recall_history):
+fateengine serve adventures/example.json
+
+# Resume a save, and also expose the gameplay-driving write tools for an agentic
+# host that should drive the game itself:
+fateengine serve adventures/example.json --slot quicksave --write
+```
+
+By default only the read-only tools are exposed (the hybrid-control boundary);
+`--write` additionally exposes `available_actions`, `apply_action`,
+`evaluate_quests`, and `check_end_conditions`. Status is written to stderr so
+stdout stays clean for the MCP protocol.
+
 ## Authoring adventures
 
 Adventure files validate against `schema/adventure.schema.json`. The two extension points
