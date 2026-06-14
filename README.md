@@ -107,6 +107,46 @@ fateengine play adventures/example.json --llm ollama
 Providers are selected by name (`anthropic`, `openai`, `ollama`/`local`,
 `openai-compatible`); endpoint, model, and params live in `LLMConfig`.
 
+### Configuring the endpoint / model / API key
+
+Configuration is layered, lowest precedence first: **dataclass defaults → a JSON
+config file → `FATEENGINE_*` environment variables → CLI flags**. Keep secrets and
+endpoints out of git — use env vars, or a config file that is gitignored.
+
+CLI overrides (per run):
+
+```bash
+fateengine play adventures/example.json \
+  --llm openai-compatible --endpoint http://localhost:11434/v1 --model gemma4-rev
+```
+
+Environment variables (nothing written to disk):
+
+```bash
+export FATEENGINE_LLM_PROVIDER=openai-compatible
+export FATEENGINE_LLM_ENDPOINT=http://localhost:11434/v1
+export FATEENGINE_LLM_MODEL=gemma4-rev
+# export FATEENGINE_LLM_API_KEY=sk-...     # or FATEENGINE_LLM_API_KEY_ENV=MY_KEY_VAR
+fateengine play adventures/example.json --llm    # bare --llm uses the configured provider
+```
+
+Config file (copy the committed template, then edit — the real file is gitignored):
+
+```bash
+cp fateengine.config.example.json fateengine.config.json   # gitignored
+fateengine play adventures/example.json --llm
+```
+
+Searched automatically at `./fateengine.config.json` then
+`~/.config/fateengine/config.json`. **Plugging into a local Gemma 4 (Ollama):** set
+`provider` to `ollama` (defaults the endpoint to `http://localhost:11434/v1`) or
+`openai-compatible` with an explicit `endpoint`, set `model` to your tag (e.g.
+`gemma4-rev`), and leave the API key empty — local servers need none.
+
+The API key resolves as: `llm.api_key` (direct) → the env var named by
+`llm.api_key_env` → the provider's conventional default (`ANTHROPIC_API_KEY` /
+`OPENAI_API_KEY`). Local/`openai-compatible` endpoints don't require one.
+
 ### Run as an MCP server
 
 FateEngine can also run as a real Model Context Protocol server over stdio, so an

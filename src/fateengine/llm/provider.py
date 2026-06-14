@@ -194,10 +194,14 @@ class OpenAIProvider:
 _OPENAI_LIKE = {"openai", "openai-compatible", "ollama", "local"}
 
 
-def _resolve_key(env_name: str, *, required: bool) -> str | None:
+def _resolve_key(config: LLMConfig, default_env: str, *, required: bool) -> str | None:
+    """Direct config.api_key wins; otherwise read the named env var."""
+    if config.api_key:
+        return config.api_key
+    env_name = config.api_key_env or default_env
     val = os.environ.get(env_name)
     if not val and required:
-        raise LLMError(f"missing API key: set ${env_name}")
+        raise LLMError(f"missing API key: set ${env_name} or llm.api_key")
     return val
 
 
@@ -215,7 +219,7 @@ def get_provider(config: LLMConfig) -> LLMProvider:
     if provider == "anthropic":
         return AnthropicProvider(
             model=config.model,
-            api_key=_resolve_key(config.api_key_env or "ANTHROPIC_API_KEY", required=True),
+            api_key=_resolve_key(config, "ANTHROPIC_API_KEY", required=True),
             base_url=config.endpoint,
             max_tokens=config.max_tokens,
             timeout=config.timeout_seconds,
@@ -225,14 +229,10 @@ def get_provider(config: LLMConfig) -> LLMProvider:
     if provider in _OPENAI_LIKE:
         local = provider in ("ollama", "local")
         base_url = config.endpoint or ("http://localhost:11434/v1" if local else None)
-        # If the user left the default Anthropic env var in place, fall back to the
-        # conventional OpenAI one. Local servers don't require a key.
-        key_env = (
-            config.api_key_env if config.api_key_env != "ANTHROPIC_API_KEY" else "OPENAI_API_KEY"
-        )
+        # Local servers (and any endpoint override) don't require a key.
         return OpenAIProvider(
             model=config.model,
-            api_key=_resolve_key(key_env, required=not local and base_url is None),
+            api_key=_resolve_key(config, "OPENAI_API_KEY", required=not local and base_url is None),
             base_url=base_url,
             max_tokens=config.max_tokens,
             timeout=config.timeout_seconds,

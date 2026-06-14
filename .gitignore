@@ -22,6 +22,11 @@ htmlcov/
 /saves/
 *.save.json
 
+# Local LLM / runtime configuration (endpoints, keys) — never commit.
+# The committed template is fateengine.config.example.json.
+/fateengine.config.json
+*.config.local.json
+
 # Logs
 *.log
 /logs/

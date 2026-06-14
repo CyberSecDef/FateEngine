@@ -174,23 +174,36 @@ def _command(controller: SessionController, line: str, *, color: bool):
 # --- entry point ----------------------------------------------------------
 
 
+def _add_llm_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument(
+        "--llm",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="PROVIDER",
+        help="Enable LLM narration. Bare --llm uses the configured provider; "
+        "or name one (anthropic | openai | ollama | openai-compatible).",
+    )
+    p.add_argument(
+        "--endpoint",
+        default=None,
+        help="Override the LLM base URL (e.g. http://localhost:11434/v1).",
+    )
+    p.add_argument("--model", default=None, help="Override the LLM model name.")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="fateengine", description="Play a FateEngine adventure.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     play = sub.add_parser("play", help="Start a new adventure.")
     play.add_argument("adventure", help="Path to an adventure JSON file.")
-    play.add_argument(
-        "--llm",
-        metavar="PROVIDER",
-        default=None,
-        help="Enable LLM narration via the named provider (default: offline).",
-    )
+    _add_llm_args(play)
 
     resume = sub.add_parser("resume", help="Resume from a save slot.")
     resume.add_argument("adventure", help="Path to the adventure JSON file.")
     resume.add_argument("slot", help="Save slot name.")
-    resume.add_argument("--llm", metavar="PROVIDER", default=None)
+    _add_llm_args(resume)
 
     sub.add_parser("list", help="List available adventures.")
 
@@ -223,22 +236,35 @@ def _cmd_list(config: AppConfig, write: Callable[[str], None]) -> int:
     return 0
 
 
-def _maybe_provider(name: str | None, config: AppConfig, write: Callable[[str], None]):
-    if not name:
+def _build_llm(args, config: AppConfig, write: Callable[[str], None]):
+    """Apply CLI overrides and build the provider, or None for offline play.
+
+    --llm absent        -> offline (None)
+    --llm (bare)        -> enable, using the configured provider
+    --llm <name>        -> enable, set that provider
+    --endpoint/--model  -> override regardless
+    """
+    if args.endpoint:
+        config.llm.endpoint = args.endpoint
+    if args.model:
+        config.llm.model = args.model
+    if args.llm is None:
         return None
+    if args.llm:  # an explicit provider name was given
+        config.llm.provider = args.llm
+
     from ..llm.provider import get_provider
 
-    config.llm.provider = name
     try:
         return get_provider(config.llm)
-    except (NotImplementedError, Exception) as exc:  # noqa: BLE001 - degrade gracefully
-        write(f"! LLM provider {name!r} unavailable ({exc}); playing offline.")
+    except Exception as exc:  # noqa: BLE001 - degrade gracefully to offline
+        write(f"! LLM provider {config.llm.provider!r} unavailable ({exc}); playing offline.")
         return None
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    config = AppConfig()
+    config = AppConfig.load()
     color = sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
 
     if args.command == "list":
@@ -259,7 +285,7 @@ def main(argv: list[str] | None = None) -> int:
 
     controller = SessionController(
         engine,
-        _maybe_provider(args.llm, config, print),
+        _build_llm(args, config, print),
         SaveStore(config.saves_dir),
         config,
     )

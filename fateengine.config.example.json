@@ -1,0 +1,20 @@
+{
+  "_comment": "Copy to fateengine.config.json (gitignored) and edit, OR set the equivalent FATEENGINE_* env vars. Env vars override the file. Example below points narration at a local Gemma 4 served by Ollama.",
+
+  "llm": {
+    "provider": "openai-compatible",
+    "endpoint": "http://localhost:11434/v1",
+    "model": "gemma4-rev",
+    "api_key": null,
+    "api_key_env": "OPENAI_API_KEY",
+    "max_tokens": 1024,
+    "timeout_seconds": 30.0,
+    "temperature": 0.8,
+    "max_retries": 3
+  },
+
+  "adventures_dir": "adventures",
+  "saves_dir": "saves",
+  "log_level": "INFO",
+  "diagnostic_mode": false
+}
