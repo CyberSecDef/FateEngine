@@ -1,0 +1,300 @@
+{
+  "metadata": {
+    "id": "aurora-heist",
+    "title": "The Aurora Heist",
+    "version": "1.0.0",
+    "starting_location": "docking_bay",
+    "description": "Slip aboard Aurora Station, lift the data core, and reach your shuttle before the alarm. Two ways in: grease the guard, or hack the door. One way to blow it: get greedy."
+  },
+
+  "map": {
+    "locations": [
+      {
+        "id": "docking_bay",
+        "name": "Docking Bay 7",
+        "base_prose": "Your shuttle ticks as it cools on the pad. A pressure door leads inward to the station's central corridor.",
+        "tags": ["start", "exit"]
+      },
+      {
+        "id": "corridor",
+        "name": "Central Corridor",
+        "base_prose": "A curved hallway hums with recycled air. Doors branch to security and storage; a sealed bulkhead marked SERVER CORE waits at the far end, beside a maintenance terminal."
+      },
+      {
+        "id": "security_office",
+        "name": "Security Office",
+        "base_prose": "Monitors flicker over an empty desk. A bored guard leans back in a chair, a keycard clipped to his belt."
+      },
+      {
+        "id": "storage",
+        "name": "Storage Locker",
+        "base_prose": "Crates and spare parts line the walls. A multitool hangs on a magnetic strip."
+      },
+      {
+        "id": "server_room",
+        "name": "Server Core",
+        "base_prose": "Black towers blink in cold rows. The data core sits in a lit cradle at the center, waiting to be pulled."
+      }
+    ],
+    "connections": [
+      { "from": "docking_bay", "to": "corridor", "description": "Inward to the central corridor." },
+      { "from": "corridor", "to": "docking_bay", "description": "Back to your shuttle." },
+      { "from": "corridor", "to": "security_office", "description": "Into the security office." },
+      { "from": "security_office", "to": "corridor", "description": "Out to the corridor." },
+      { "from": "corridor", "to": "storage", "description": "Into the storage locker." },
+      { "from": "storage", "to": "corridor", "description": "Out to the corridor." },
+      {
+        "from": "corridor",
+        "to": "server_room",
+        "condition": { "or": [ { "has": ["inventory", "keycard"] }, { "==": ["variables.hacked", true] } ] },
+        "description": "Through the SERVER CORE bulkhead (locked)."
+      },
+      { "from": "server_room", "to": "corridor", "description": "Back to the corridor." }
+    ]
+  },
+
+  "quests": [
+    {
+      "id": "extract_core",
+      "name": "Extract the Core",
+      "description": "Get the data core off the station and onto your shuttle.",
+      "objectives": [
+        {
+          "id": "breach_server",
+          "description": "Get inside the server core.",
+          "completion_criteria": { "==": ["location", "server_room"] }
+        },
+        {
+          "id": "secure_core",
+          "description": "Take the data core.",
+          "completion_criteria": { "has": ["inventory", "data_core"] }
+        }
+      ],
+      "reward": {
+        "effects": [ { "type": "set_status", "parameters": { "key": "core_secured", "value": true } } ]
+      }
+    },
+    {
+      "id": "pay_dues",
+      "name": "Grease the Wheels",
+      "description": "Some doors open easier with credits.",
+      "objectives": [
+        {
+          "id": "paid",
+          "description": "Bribe the guard.",
+          "completion_criteria": { "==": ["variables.bribed_guard", true] }
+        }
+      ],
+      "reward": {
+        "effects": [
+          { "type": "grant_reward", "parameters": { "effects": [
+            { "type": "add_inventory", "parameters": { "item": "access_chip", "qty": 1 } },
+            { "type": "set_status", "parameters": { "key": "guard_friendly", "value": true } }
+          ] } }
+        ]
+      }
+    }
+  ],
+
+  "actions": [
+    {
+      "id": "look",
+      "name": "Look around",
+      "description": "Take stock of your surroundings.",
+      "synonyms": ["look", "examine", "survey"],
+      "available_when": { "exists": "location" },
+      "effects": []
+    },
+    {
+      "id": "enter_station",
+      "name": "Enter the station",
+      "description": "Cycle the pressure door into the corridor.",
+      "synonyms": ["enter", "inside", "corridor", "in"],
+      "available_when": { "==": ["location", "docking_bay"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "corridor" } } ]
+    },
+    {
+      "id": "return_to_shuttle",
+      "name": "Return to the shuttle",
+      "description": "Head back to Docking Bay 7 and your waiting shuttle.",
+      "synonyms": ["shuttle", "escape", "leave", "bay", "out"],
+      "available_when": { "==": ["location", "corridor"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "docking_bay" } } ]
+    },
+    {
+      "id": "to_security",
+      "name": "Go to the security office",
+      "description": "Step into the security office.",
+      "synonyms": ["security", "office", "guard"],
+      "available_when": { "==": ["location", "corridor"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "security_office" } } ]
+    },
+    {
+      "id": "leave_security",
+      "name": "Leave the security office",
+      "description": "Step back into the corridor.",
+      "synonyms": ["out", "corridor", "back"],
+      "available_when": { "==": ["location", "security_office"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "corridor" } } ]
+    },
+    {
+      "id": "to_storage",
+      "name": "Go to the storage locker",
+      "description": "Duck into the storage locker.",
+      "synonyms": ["storage", "locker"],
+      "available_when": { "==": ["location", "corridor"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "storage" } } ]
+    },
+    {
+      "id": "leave_storage",
+      "name": "Leave the storage locker",
+      "description": "Step back into the corridor.",
+      "synonyms": ["out", "corridor", "back"],
+      "available_when": { "==": ["location", "storage"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "corridor" } } ]
+    },
+    {
+      "id": "bribe_guard",
+      "name": "Bribe the guard",
+      "description": "Slip the guard a stack of credits to look the other way.",
+      "synonyms": ["bribe", "pay", "credits"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "security_office"] },
+          { ">=": ["inventory.credits", 50] },
+          { "not": { "==": ["variables.bribed_guard", true] } }
+        ]
+      },
+      "effects": [
+        { "type": "remove_inventory", "parameters": { "item": "credits", "qty": 50 } },
+        { "type": "set_variable", "parameters": { "key": "bribed_guard", "value": true } }
+      ]
+    },
+    {
+      "id": "take_keycard",
+      "name": "Take the keycard",
+      "description": "The guard waves you toward his keycard.",
+      "synonyms": ["keycard", "card", "take card"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "security_office"] },
+          { "==": ["variables.bribed_guard", true] },
+          { "not": { "has": ["inventory", "keycard"] } }
+        ]
+      },
+      "effects": [ { "type": "add_inventory", "parameters": { "item": "keycard", "qty": 1 } } ]
+    },
+    {
+      "id": "grab_keycard",
+      "name": "Snatch the keycard",
+      "description": "Make a grab for the keycard while the guard isn't looking.",
+      "synonyms": ["snatch", "steal", "grab"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "security_office"] },
+          { "not": { "==": ["variables.bribed_guard", true] } },
+          { "not": { "has": ["inventory", "keycard"] } }
+        ]
+      },
+      "effects": [
+        { "type": "add_inventory", "parameters": { "item": "keycard", "qty": 1 } },
+        { "type": "set_status", "parameters": { "key": "alarm", "value": true } }
+      ]
+    },
+    {
+      "id": "take_multitool",
+      "name": "Take the multitool",
+      "description": "Lift the multitool off the magnetic strip.",
+      "synonyms": ["multitool", "tool", "take tool"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "storage"] },
+          { "not": { "has": ["inventory", "multitool"] } }
+        ]
+      },
+      "effects": [ { "type": "add_inventory", "parameters": { "item": "multitool", "qty": 1 } } ]
+    },
+    {
+      "id": "hack_terminal",
+      "name": "Hack the maintenance terminal",
+      "description": "Splice the multitool into the terminal and override the bulkhead lock.",
+      "synonyms": ["hack", "override", "terminal"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "corridor"] },
+          { "has": ["inventory", "multitool"] },
+          { "not": { "==": ["variables.hacked", true] } }
+        ]
+      },
+      "effects": [ { "type": "set_variable", "parameters": { "key": "hacked", "value": true } } ]
+    },
+    {
+      "id": "enter_server",
+      "name": "Enter the server core",
+      "description": "The SERVER CORE bulkhead is open — step through.",
+      "synonyms": ["server", "core room", "in"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "corridor"] },
+          { "or": [ { "has": ["inventory", "keycard"] }, { "==": ["variables.hacked", true] } ] }
+        ]
+      },
+      "effects": [ { "type": "move_location", "parameters": { "to": "server_room" } } ]
+    },
+    {
+      "id": "leave_server",
+      "name": "Leave the server core",
+      "description": "Slip back out to the corridor.",
+      "synonyms": ["out", "corridor", "back"],
+      "available_when": { "==": ["location", "server_room"] },
+      "effects": [ { "type": "move_location", "parameters": { "to": "corridor" } } ]
+    },
+    {
+      "id": "take_core",
+      "name": "Take the data core",
+      "description": "Pull the data core from its cradle.",
+      "synonyms": ["core", "data core", "take core"],
+      "available_when": {
+        "and": [
+          { "==": ["location", "server_room"] },
+          { "not": { "has": ["inventory", "data_core"] } }
+        ]
+      },
+      "effects": [
+        { "type": "add_inventory", "parameters": { "item": "data_core", "qty": 1 } },
+        { "type": "complete_objective", "parameters": { "quest": "extract_core", "objective": "secure_core" } }
+      ]
+    }
+  ],
+
+  "npcs": [
+    {
+      "id": "guard",
+      "name": "Station Guard",
+      "current_location": "security_office",
+      "dialogue_seed": "Underpaid and openly bored. Will happily look the other way for fifty credits; grabs for his sidearm if you try to steal from him.",
+      "state": { "alert": false }
+    }
+  ],
+
+  "initial_state": {
+    "location": "docking_bay",
+    "inventory": { "credits": 60 },
+    "status": {},
+    "active_quests": ["extract_core", "pay_dues"],
+    "variables": {}
+  },
+
+  "win_conditions": [
+    {
+      "and": [
+        { "==": ["location", "docking_bay"] },
+        { "has": ["inventory", "data_core"] }
+      ]
+    }
+  ],
+
+  "lose_conditions": [
+    { "==": ["status.alarm", true] }
+  ]
+}
