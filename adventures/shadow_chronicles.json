@@ -1,0 +1,143 @@
+{
+  "metadata": {
+    "id": "shadow-chronicles",
+    "title": "Shadow Chronicles: Anchor 1",
+    "version": "1.0.0",
+    "starting_location": "cryo_chamber",
+    "description": "You wake as Subject ANCHOR-47 in a cryo pod beneath a dead city. Reality is fraying. Restore power, get past what the war left in containment, and reach the Anchor Chamber to stabilize ANCHOR 1. Adapted from the Shadow Chronicles game."
+  },
+
+  "map": {
+    "locations": [
+      { "id": "cryo_chamber", "name": "Cryo Chamber", "base_prose": "A cylindrical cryo pod hangs open, rimmed with melting frost. Cold vapor curls across the floor and emergency lighting flickers, throwing long shadows on the metal walls. A door leads south into a dark hallway.", "tags": ["start"] },
+      { "id": "dark_hallway", "name": "Dark Hallway", "base_prose": "A junction of scorched corridors. Doors branch east to the medical bay and west to a security office; north opens onto the central hub, and the cryo chamber lies back to the north... no, the way you came." },
+      { "id": "medical_bay", "name": "Medical Bay", "base_prose": "Overturned gurneys and shattered vials. A wall cabinet still holds a sealed medkit." },
+      { "id": "security_office", "name": "Security Office", "base_prose": "Monitors hiss static over a cluttered desk. A keycard lies in a drawer and a multi-tool knife rests beside a cold cup of coffee." },
+      { "id": "central_hub", "name": "Central Hub", "base_prose": "The spine of Sublevel 3. Passages run east to the science wing and west to engineering. A reinforced door north, marked COMMAND, blinks a red card-reader." },
+      { "id": "science_entrance", "name": "Science Wing Entrance", "base_prose": "A biometric scanner guards the inner lab, its slot dark and unpowered. The hub lies west." },
+      { "id": "science_lab", "name": "Primary Science Lab", "base_prose": "Burned notebooks and a humming research terminal. A lab access badge dangles from a dead technician's lanyard. A sealed door north reads SPECIMEN CONTAINMENT." },
+      { "id": "specimen_containment", "name": "Specimen Containment", "base_prose": "Shattered glass and a reek of ozone. Something psionically warped twitches in the dark — and behind it, on a cradle, an anchor interface key." },
+      { "id": "engineering_entrance", "name": "Engineering Wing Entrance", "base_prose": "Pipes sweat condensation along the walls. The hub is east; a utility corridor runs west." },
+      { "id": "utility_corridor", "name": "Utility Corridor", "base_prose": "A cramped service run. Doors lead north to the generator room, south to pump control, and west into a maintenance crawlspace." },
+      { "id": "generator_room", "name": "Generator Room", "base_prose": "Dead turbines loom in the gloom. An auxiliary power cell sits half-seated in a maintenance slot, still charged." },
+      { "id": "pump_control", "name": "Pump Control Room", "base_prose": "Gauges sit at zero. A detached pump-control handle lies on the console." },
+      { "id": "crawlspace", "name": "Maintenance Crawlspace", "base_prose": "A tight, wire-choked tube. Exposed conduits spark. An insulated toolkit is wedged against a bulkhead." },
+      { "id": "command_corridor", "name": "Command Corridor", "base_prose": "Brushed steel and dead status boards. The hub is south, an observation deck east, and the anchor antechamber north." },
+      { "id": "observation_deck", "name": "Observation Deck", "base_prose": "A long window onto black rock. A command console still cycles a log — and an activation code: EPSILON-7-THETA." },
+      { "id": "anchor_antechamber", "name": "Anchor Antechamber", "base_prose": "A pressure lock thrums with a sound you feel in your teeth. A keyed hatch north leads to the Anchor Chamber." },
+      { "id": "anchor_chamber", "name": "Anchor Chamber — ANCHOR 1", "base_prose": "A vast sphere of humming reality-stabilization gear. At its heart, ANCHOR 1 waits, an activation terminal pulsing in time with your pulse." }
+    ],
+    "connections": [
+      { "from": "cryo_chamber", "to": "dark_hallway", "description": "South into the dark hallway." },
+      { "from": "dark_hallway", "to": "cryo_chamber", "description": "Back to the cryo chamber." },
+      { "from": "dark_hallway", "to": "medical_bay", "description": "East to the medical bay." },
+      { "from": "medical_bay", "to": "dark_hallway", "description": "West to the hallway." },
+      { "from": "dark_hallway", "to": "security_office", "description": "West to the security office." },
+      { "from": "security_office", "to": "dark_hallway", "description": "East to the hallway." },
+      { "from": "dark_hallway", "to": "central_hub", "description": "North to the central hub." },
+      { "from": "central_hub", "to": "dark_hallway", "description": "South to the hallway." },
+      { "from": "central_hub", "to": "science_entrance", "description": "East to the science wing." },
+      { "from": "science_entrance", "to": "central_hub", "description": "West to the hub." },
+      { "from": "central_hub", "to": "engineering_entrance", "description": "West to engineering." },
+      { "from": "engineering_entrance", "to": "central_hub", "description": "East to the hub." },
+      { "from": "central_hub", "to": "command_corridor", "condition": { "has": ["inventory", "keycard"] }, "description": "North through the COMMAND door (keycard)." },
+      { "from": "command_corridor", "to": "central_hub", "description": "South to the hub." },
+      { "from": "science_entrance", "to": "science_lab", "condition": { "==": ["variables.scanner_powered", true] }, "description": "Into the lab (scanner must be powered)." },
+      { "from": "science_lab", "to": "science_entrance", "description": "Back to the wing entrance." },
+      { "from": "science_lab", "to": "specimen_containment", "condition": { "has": ["inventory", "lab_badge"] }, "description": "North into containment (lab badge)." },
+      { "from": "specimen_containment", "to": "science_lab", "description": "South to the lab." },
+      { "from": "engineering_entrance", "to": "utility_corridor", "description": "West to the utility corridor." },
+      { "from": "utility_corridor", "to": "engineering_entrance", "description": "East to the wing entrance." },
+      { "from": "utility_corridor", "to": "generator_room", "description": "North to the generator room." },
+      { "from": "generator_room", "to": "utility_corridor", "description": "South to the corridor." },
+      { "from": "utility_corridor", "to": "pump_control", "description": "South to pump control." },
+      { "from": "pump_control", "to": "utility_corridor", "description": "North to the corridor." },
+      { "from": "utility_corridor", "to": "crawlspace", "description": "West into the crawlspace." },
+      { "from": "crawlspace", "to": "utility_corridor", "description": "East to the corridor." },
+      { "from": "command_corridor", "to": "observation_deck", "description": "East to the observation deck." },
+      { "from": "observation_deck", "to": "command_corridor", "description": "West to the corridor." },
+      { "from": "command_corridor", "to": "anchor_antechamber", "description": "North to the anchor antechamber." },
+      { "from": "anchor_antechamber", "to": "command_corridor", "description": "South to the corridor." },
+      { "from": "anchor_antechamber", "to": "anchor_chamber", "condition": { "has": ["inventory", "anchor_key"] }, "description": "North through the keyed hatch (anchor key)." },
+      { "from": "anchor_chamber", "to": "anchor_antechamber", "description": "South to the antechamber." }
+    ]
+  },
+
+  "quests": [
+    {
+      "id": "project_anchor",
+      "name": "Project Anchor",
+      "description": "Restore the anchor systems and stabilize ANCHOR 1.",
+      "objectives": [
+        { "id": "secure_access", "description": "Obtain a command keycard.", "completion_criteria": { "has": ["inventory", "keycard"] } },
+        { "id": "restore_power", "description": "Power the science wing scanner.", "completion_criteria": { "==": ["variables.scanner_powered", true] } },
+        { "id": "neutralize", "description": "Deal with the specimen in containment.", "completion_criteria": { "==": ["variables.specimen_defeated", true] } },
+        { "id": "recover_key", "description": "Recover the anchor interface key.", "completion_criteria": { "has": ["inventory", "anchor_key"] } },
+        { "id": "decode", "description": "Find the anchor activation code.", "completion_criteria": { "==": ["variables.access_code", true] } }
+      ],
+      "reward": { "effects": [ { "type": "set_status", "parameters": { "key": "mission_ready", "value": true } } ] }
+    },
+    {
+      "id": "echoes",
+      "name": "Echoes of the Dead",
+      "description": "Read the lab's psionic research and attune your mind.",
+      "objectives": [
+        { "id": "attune", "description": "Study the research terminal.", "completion_criteria": { "==": ["variables.mental_focus", true] } }
+      ],
+      "reward": { "effects": [ { "type": "grant_reward", "parameters": { "effects": [ { "type": "set_status", "parameters": { "key": "attuned", "value": true } } ] } } ] }
+    }
+  ],
+
+  "actions": [
+    { "id": "look", "name": "Look around", "description": "Take in your surroundings.", "synonyms": ["look", "examine", "survey"], "available_when": { "exists": "location" }, "effects": [] },
+
+    { "id": "go_cryo_chamber", "name": "Go to the cryo chamber", "description": "Return to the cryo chamber.", "synonyms": ["cryo", "pod"], "available_when": { "==": ["location", "dark_hallway"] }, "effects": [ { "type": "move_location", "parameters": { "to": "cryo_chamber" } } ] },
+    { "id": "go_dark_hallway", "name": "Go to the dark hallway", "description": "Head into the dark hallway.", "synonyms": ["hallway", "hall"], "available_when": { "or": [ { "==": ["location", "cryo_chamber"] }, { "==": ["location", "medical_bay"] }, { "==": ["location", "security_office"] }, { "==": ["location", "central_hub"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "dark_hallway" } } ] },
+    { "id": "go_medical_bay", "name": "Go to the medical bay", "description": "Enter the medical bay.", "synonyms": ["medical", "medbay", "infirmary"], "available_when": { "==": ["location", "dark_hallway"] }, "effects": [ { "type": "move_location", "parameters": { "to": "medical_bay" } } ] },
+    { "id": "go_security_office", "name": "Go to the security office", "description": "Enter the security office.", "synonyms": ["security", "office"], "available_when": { "==": ["location", "dark_hallway"] }, "effects": [ { "type": "move_location", "parameters": { "to": "security_office" } } ] },
+    { "id": "go_central_hub", "name": "Go to the central hub", "description": "Head to the central hub.", "synonyms": ["hub", "central"], "available_when": { "or": [ { "==": ["location", "dark_hallway"] }, { "==": ["location", "science_entrance"] }, { "==": ["location", "engineering_entrance"] }, { "==": ["location", "command_corridor"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "central_hub" } } ] },
+    { "id": "go_science_entrance", "name": "Go to the science wing", "description": "Head to the science wing entrance.", "synonyms": ["science", "wing"], "available_when": { "or": [ { "==": ["location", "central_hub"] }, { "==": ["location", "science_lab"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "science_entrance" } } ] },
+    { "id": "go_science_lab", "name": "Go to the science lab", "description": "Enter the primary science lab.", "synonyms": ["lab", "science lab"], "available_when": { "or": [ { "and": [ { "==": ["location", "science_entrance"] }, { "==": ["variables.scanner_powered", true] } ] }, { "==": ["location", "specimen_containment"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "science_lab" } } ] },
+    { "id": "go_specimen_containment", "name": "Go to specimen containment", "description": "Step into the containment chamber.", "synonyms": ["containment", "specimen"], "available_when": { "and": [ { "==": ["location", "science_lab"] }, { "has": ["inventory", "lab_badge"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "specimen_containment" } } ] },
+    { "id": "go_engineering_entrance", "name": "Go to engineering", "description": "Head to the engineering wing entrance.", "synonyms": ["engineering", "eng"], "available_when": { "or": [ { "==": ["location", "central_hub"] }, { "==": ["location", "utility_corridor"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "engineering_entrance" } } ] },
+    { "id": "go_utility_corridor", "name": "Go to the utility corridor", "description": "Enter the utility corridor.", "synonyms": ["utility", "corridor"], "available_when": { "or": [ { "==": ["location", "engineering_entrance"] }, { "==": ["location", "generator_room"] }, { "==": ["location", "pump_control"] }, { "==": ["location", "crawlspace"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "utility_corridor" } } ] },
+    { "id": "go_generator_room", "name": "Go to the generator room", "description": "Enter the generator room.", "synonyms": ["generator", "gen"], "available_when": { "==": ["location", "utility_corridor"] }, "effects": [ { "type": "move_location", "parameters": { "to": "generator_room" } } ] },
+    { "id": "go_pump_control", "name": "Go to pump control", "description": "Enter the pump control room.", "synonyms": ["pump"], "available_when": { "==": ["location", "utility_corridor"] }, "effects": [ { "type": "move_location", "parameters": { "to": "pump_control" } } ] },
+    { "id": "go_crawlspace", "name": "Go to the crawlspace", "description": "Squeeze into the maintenance crawlspace.", "synonyms": ["crawlspace", "crawl"], "available_when": { "==": ["location", "utility_corridor"] }, "effects": [ { "type": "move_location", "parameters": { "to": "crawlspace" } } ] },
+    { "id": "go_command_corridor", "name": "Go to the command corridor", "description": "Pass through the COMMAND door.", "synonyms": ["command"], "available_when": { "or": [ { "and": [ { "==": ["location", "central_hub"] }, { "has": ["inventory", "keycard"] } ] }, { "==": ["location", "observation_deck"] }, { "==": ["location", "anchor_antechamber"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "command_corridor" } } ] },
+    { "id": "go_observation_deck", "name": "Go to the observation deck", "description": "Step onto the observation deck.", "synonyms": ["observation", "deck"], "available_when": { "==": ["location", "command_corridor"] }, "effects": [ { "type": "move_location", "parameters": { "to": "observation_deck" } } ] },
+    { "id": "go_anchor_antechamber", "name": "Go to the anchor antechamber", "description": "Enter the anchor antechamber.", "synonyms": ["antechamber"], "available_when": { "or": [ { "==": ["location", "command_corridor"] }, { "==": ["location", "anchor_chamber"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "anchor_antechamber" } } ] },
+    { "id": "go_anchor_chamber", "name": "Go to the anchor chamber", "description": "Open the keyed hatch into the Anchor Chamber.", "synonyms": ["anchor chamber", "chamber"], "available_when": { "and": [ { "==": ["location", "anchor_antechamber"] }, { "has": ["inventory", "anchor_key"] } ] }, "effects": [ { "type": "move_location", "parameters": { "to": "anchor_chamber" } } ] },
+
+    { "id": "take_flashlight", "name": "Take the flashlight", "description": "Grab the flashlight from the pod.", "synonyms": ["flashlight", "light", "torch"], "available_when": { "and": [ { "==": ["location", "cryo_chamber"] }, { "not": { "has": ["inventory", "flashlight"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "flashlight", "qty": 1 } } ] },
+    { "id": "take_medkit", "name": "Take the medkit", "description": "Pocket the sealed medkit.", "synonyms": ["medkit", "medicine", "kit"], "available_when": { "and": [ { "==": ["location", "medical_bay"] }, { "not": { "has": ["inventory", "medkit"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "medkit", "qty": 1 } } ] },
+    { "id": "take_keycard", "name": "Take the keycard", "description": "Take the command keycard from the drawer.", "synonyms": ["keycard", "card"], "available_when": { "and": [ { "==": ["location", "security_office"] }, { "not": { "has": ["inventory", "keycard"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "keycard", "qty": 1 } } ] },
+    { "id": "take_knife", "name": "Take the multi-tool knife", "description": "Take the multi-tool knife from the desk.", "synonyms": ["knife", "multitool", "weapon"], "available_when": { "and": [ { "==": ["location", "security_office"] }, { "not": { "has": ["inventory", "knife"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "knife", "qty": 1 } } ] },
+    { "id": "take_power_cell", "name": "Take the power cell", "description": "Pull the auxiliary power cell from its slot.", "synonyms": ["power cell", "cell", "battery"], "available_when": { "and": [ { "==": ["location", "generator_room"] }, { "not": { "has": ["inventory", "power_cell"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "power_cell", "qty": 1 } } ] },
+    { "id": "take_toolkit", "name": "Take the insulated toolkit", "description": "Free the insulated toolkit from the bulkhead.", "synonyms": ["toolkit", "tools"], "available_when": { "and": [ { "==": ["location", "crawlspace"] }, { "not": { "has": ["inventory", "toolkit"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "toolkit", "qty": 1 } } ] },
+    { "id": "insert_power_cell", "name": "Insert the power cell", "description": "Seat the power cell into the biometric scanner.", "synonyms": ["insert", "power scanner", "use power cell"], "available_when": { "and": [ { "==": ["location", "science_entrance"] }, { "has": ["inventory", "power_cell"] }, { "not": { "==": ["variables.scanner_powered", true] } } ] }, "effects": [ { "type": "remove_inventory", "parameters": { "item": "power_cell", "qty": 1 } }, { "type": "set_variable", "parameters": { "key": "scanner_powered", "value": true } } ] },
+    { "id": "take_lab_badge", "name": "Take the lab access badge", "description": "Lift the lab access badge from the lanyard.", "synonyms": ["badge", "lab badge"], "available_when": { "and": [ { "==": ["location", "science_lab"] }, { "not": { "has": ["inventory", "lab_badge"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "lab_badge", "qty": 1 } } ] },
+    { "id": "read_terminal", "name": "Read the research terminal", "description": "Study the lab's psionic research logs.", "synonyms": ["read terminal", "research", "logs"], "available_when": { "and": [ { "==": ["location", "science_lab"] }, { "not": { "==": ["variables.mental_focus", true] } } ] }, "effects": [ { "type": "set_variable", "parameters": { "key": "mental_focus", "value": true } } ] },
+    { "id": "attack_specimen", "name": "Attack the specimen", "description": "Strike the warped specimen with the knife.", "synonyms": ["attack", "fight", "kill specimen"], "available_when": { "and": [ { "==": ["location", "specimen_containment"] }, { "has": ["inventory", "knife"] }, { "not": { "==": ["variables.specimen_defeated", true] } } ] }, "effects": [ { "type": "set_variable", "parameters": { "key": "specimen_defeated", "value": true } } ] },
+    { "id": "fight_barehanded", "name": "Rush the specimen barehanded", "description": "Throw yourself at the specimen with nothing but your hands.", "synonyms": ["rush", "grapple", "barehanded"], "available_when": { "and": [ { "==": ["location", "specimen_containment"] }, { "not": { "has": ["inventory", "knife"] } }, { "not": { "==": ["variables.specimen_defeated", true] } } ] }, "effects": [ { "type": "set_status", "parameters": { "key": "killed", "value": true } } ] },
+    { "id": "take_anchor_key", "name": "Take the anchor interface key", "description": "Lift the anchor interface key from the cradle.", "synonyms": ["anchor key", "key", "interface key"], "available_when": { "and": [ { "==": ["location", "specimen_containment"] }, { "==": ["variables.specimen_defeated", true] }, { "not": { "has": ["inventory", "anchor_key"] } } ] }, "effects": [ { "type": "add_inventory", "parameters": { "item": "anchor_key", "qty": 1 } } ] },
+    { "id": "read_console", "name": "Read the command console", "description": "Read the activation code from the command console.", "synonyms": ["read console", "console", "code"], "available_when": { "and": [ { "==": ["location", "observation_deck"] }, { "not": { "==": ["variables.access_code", true] } } ] }, "effects": [ { "type": "set_variable", "parameters": { "key": "access_code", "value": true } } ] },
+    { "id": "activate_anchor", "name": "Activate ANCHOR 1", "description": "Enter the code EPSILON-7-THETA and stabilize ANCHOR 1.", "synonyms": ["activate", "activate anchor", "stabilize"], "available_when": { "and": [ { "==": ["location", "anchor_chamber"] }, { "==": ["variables.access_code", true] } ] }, "effects": [ { "type": "set_status", "parameters": { "key": "anchor_activated", "value": true } }, { "type": "trigger_end", "parameters": { "outcome": "win", "reason": "Reality settles around you as ANCHOR 1 hums to life. For now, the boundary holds." } } ] }
+  ],
+
+  "npcs": [
+    { "id": "warped_specimen", "name": "Psionically Warped Specimen", "current_location": "specimen_containment", "dialogue_seed": "A former test subject collapsed into something that should not move the way it moves. It does not speak; it lunges. Steel ends it; bare hands do not.", "state": { "hostile": true } }
+  ],
+
+  "initial_state": {
+    "location": "cryo_chamber",
+    "inventory": {},
+    "status": {},
+    "active_quests": ["project_anchor", "echoes"],
+    "variables": {}
+  },
+
+  "lose_conditions": [
+    { "==": ["status.killed", true] }
+  ]
+}
